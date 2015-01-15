@@ -1,0 +1,9 @@
+Todo:
+1: Implement loggers for various notifications and so on. For example, if a specific binding is ignored because it is
+missing one component, would be interesting to know about it
+2: Generate all the documentation for the project
+3: Provide wrappers for various types of listeners and producers
+    - work queues
+    - pubsub
+    - rpc
+    - topics

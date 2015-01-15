@@ -1,0 +1,32 @@
+services:
+  amqp_config:
+    class: Config\AmqpConfig
+  file_locator:
+    class: Symfony\Component\Config\FileLocator
+    arguments:
+      - ["/home/cristian/Documents/project/php/amqp/config"]
+  processor:
+    class: Symfony\Component\Config\Definition\Processor
+  yaml_config_loader:
+    class: Config\YamlConfigLoader
+    arguments:
+      - "@file_locator"
+
+  configuration.factory:
+    class: Config\Processor
+    arguments:
+      - "@yaml_config_loader"
+      - "@file_locator"
+      - "@processor"
+
+  amqp_configuration:
+    class: Array
+    factory: ["@configuration.factory", getAmqpDefinition]
+    arguments:
+      - config_example
+      - "@amqp_config"
+
+  amqp_builder:
+    class: Builder\Amqp
+    arguments:
+      - "@amqp_configuration"

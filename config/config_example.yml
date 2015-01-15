@@ -1,0 +1,110 @@
+amqp:
+  baseConnection:
+    live: &baseLive {host: [localhost], port: 5672, login: admin, password: admin, vhost: /}
+
+  baseChannel:
+    base: &baseChannQOS {count: 100}
+
+  baseExchange:
+    base: &baseExchDurable {flags: [AMQP_DURABLE]}
+
+  baseQueue:
+    base: &baseQueueDurable {flags: [AMQP_DURABLE]}
+
+  connection:
+    live:
+      <<:                   *baseLive
+      login:                guest
+      password:             guest
+
+  channel:
+    live:
+      <<:                   *baseChannQOS
+      connection:           live
+
+  exchange:
+    shop.club.dev:
+      channel:              live
+      <<:                   *baseExchDurable
+      name:
+        name:               test
+        type:               constant
+      type:                 AMQP_EX_TYPE_TOPIC
+      ae:                   shop.club.dev.error
+      dependencies:
+        exchange:
+          - shop.club.dev.error  # the alternate exchange
+        queue:
+          - error             # the error queue on the alternate exchange
+    shop.club.dev.error:
+      channel:              live
+      <<:                   *baseExchDurable
+      name:
+        name:               shop.club.dev.error
+        type:               constant
+      type:                 AMQP_EX_TYPE_TOPIC
+
+    lol:
+      channel:              live
+      name:
+        name:               lol
+        type:               constant
+      type:                 AMQP_EX_TYPE_DIRECT
+      flags:                [AMQP_DURABLE]
+      dependencies:
+        queue:
+          - lol
+
+  queue:
+    lol:
+      channel:              live
+      name:
+        name:               lol
+        type:               constant
+      flags:                [AMQP_DURABLE]
+      dependencies:
+        exchange:
+          - lol
+    test:
+      channel:              live
+      <<:                   *baseQueueDurable
+      name:
+        type:               constant
+        name:               test
+      arguments:
+        message-ttl:        86400000
+        dl-exchange:        shop.club.dev
+        dl-routingKey:      deadlettered
+      dependencies:
+        exchange:
+          - shop.club.dev
+        queue:
+          - error_dl
+      bindings:
+        -
+          exchange:         test
+          routingKey:       "#"
+
+    error:                  &error
+      channel:              live
+      <<:                   *baseQueueDurable
+      name:
+        name:               error
+        type:               constant
+      bindings:
+        -
+          exchange:         shop.club.dev.error
+          routingKey:       "#"
+      dependencies:
+        exchange:
+          - shop.club.dev.error
+
+    error_dl:
+      <<:                   *error
+      name:
+        name:               error_dl
+        type:               constant
+      bindings:
+        -
+          exchange:         shop.club.dev.error
+          routingKey:       deadlettered
