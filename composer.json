@@ -13,7 +13,7 @@
     ],
 
     "require": {
-        "symfony/dependency-injection": "dev-master",
+        "symfony/dependency-injection": "~2.6",
         "symfony/yaml": "dev-master",
         "symfony/config": "dev-master",
 
