@@ -25,6 +25,5 @@
             "Config":       "src/"
         }
     },
-    "target-dir": "cdatculescu/component/amqp-base",
     "minimum-stability": "dev"
 }
