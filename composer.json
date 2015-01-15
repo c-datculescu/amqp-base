@@ -14,8 +14,8 @@
 
     "require": {
         "symfony/dependency-injection": "~2.6",
-        "symfony/yaml": "dev-master",
-        "symfony/config": "dev-master",
+        "symfony/yaml": "~2.6",
+        "symfony/config": "~2.6",
 
         "ext-amqp": ">=1.0"
     },
