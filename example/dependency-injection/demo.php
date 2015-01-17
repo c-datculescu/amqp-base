@@ -1,11 +1,14 @@
 <?php
+/**
+ * Simple example using s2 DI component for injecting the services
+ */
 use \Symfony\Component\DependencyInjection\ContainerBuilder;
 use \Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use \Symfony\Component\Config\FileLocator;
 
-require_once "../vendor/autoload.php";
+require_once "../../vendor/autoload.php";
 
-$file = array(__DIR__ . '/../config');
+$file = array(__DIR__);
 
 $container = new ContainerBuilder();
 $loader = new YamlFileLoader(
@@ -15,9 +18,6 @@ $loader = new YamlFileLoader(
 $loader->load('services.yml');
 
 /** @var Builder\Amqp $res */
-$res = $container->get('amqp_builder');
+$res = $container->get('amqpBuilder');
 $res->exchange('shop.club.dev');
-$res->queue('test');
 
-// check a recursive dependency
-$res->queue('lol');
