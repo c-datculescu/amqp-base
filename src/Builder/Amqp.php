@@ -183,6 +183,7 @@ class Amqp
         }
 
         $queue = new AMQPQueue($this->channel($configuration['channel']));
+
         $queue->setName($this->getName($configuration['name']));
         $queue->setFlags($this->buildBitmask($configuration['flags']));
         if (isset($configuration['arguments'])) {
@@ -249,6 +250,15 @@ class Amqp
         }
 
         $exchange = new AMQPExchange($this->channel($configuration['channel']));
+
+        // if we need the default exchange, retrieve it without doing all the operations.
+        if (isset($configuration['isDefault'])) {
+            $exchange->setName('');
+            $this->exchanges['default'] = $exchange;
+
+            return $exchange;
+        }
+
         if (isset($configuration['name'])) {
             $exchange->setName($this->getName($configuration['name']));
         }
