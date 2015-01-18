@@ -1,11 +1,15 @@
 <?php
-namespace Config;
+namespace Amqp\Base\Config;
 
+use Amqp\Base\Interfaces\NamedConfigInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class AmqpConfig implements ConfigurationInterface
+class Amqp implements ConfigurationInterface, NamedConfigInterface
 {
+    /**
+     * {@inheritdoc}
+     */
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
@@ -212,5 +216,13 @@ class AmqpConfig implements ConfigurationInterface
             ->end();
 
         return $treeBuilder;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'amqp';
     }
 }

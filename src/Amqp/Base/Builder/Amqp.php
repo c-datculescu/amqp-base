@@ -6,14 +6,14 @@
  *
  * @author Cristian Datculescu <cristian.datculescu@gmail.com>
  */
-namespace Builder;
+namespace Amqp\Base\Builder;
 
 use \AMQPConnection,
     \AMQPChannel,
     \AMQPQueue,
     \AMQPExchange;
 
-class Amqp
+class Amqp implements Interfaces\Amqp
 {
     /**
      * @var array
@@ -58,13 +58,7 @@ class Amqp
     }
 
     /**
-     * Returns a specified amqp connection
-     *
-     * @param string $connectionName The name of the connection defined in the configuration
-     *
-     * @return AMQPConnection
-     *
-     * @throws Exception if the connection cannot be located in the configuration file
+     * {@inheritdoc}
      */
     public function connection($connectionName)
     {
@@ -106,14 +100,9 @@ class Amqp
         return $connection;
     }
 
+
     /**
-     * Returns a specified amqp channel
-     *
-     * @param string $channelName The name of the channel from the configuration
-     *
-     * @return AMQPChannel
-     *
-     * @throws Exception if the configuration for the channel cannot be found
+     * {@inheritdoc}
      */
     public function channel($channelName)
     {
@@ -147,13 +136,7 @@ class Amqp
     }
 
     /**
-     * Returns a specified queue
-     *
-     * @param string $queueName The name of the queue from the configuration
-     *
-     * @return AMQPQueue
-     *
-     * @throws Exception If the configuration for the queue cannot be located
+     * {@inheritdoc}
      */
     public function queue($queueName, $initDependencies = true)
     {
@@ -214,13 +197,7 @@ class Amqp
     }
 
     /**
-     * Returns a specified exchange
-     *
-     * @param string $exchangeName The name of the exchange from the configuration
-     *
-     * @return AMQPExchange
-     *
-     * @throws Exception if the exchange definition cannot be located
+     * {@inheritdoc}
      */
     public function exchange($exchangeName, $initDependencies = true)
     {

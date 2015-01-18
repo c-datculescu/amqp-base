@@ -1,4 +1,4 @@
 <?php
-namespace Builder;
+namespace Amqp\Base\Config;
 
 class Exception extends \Exception {}

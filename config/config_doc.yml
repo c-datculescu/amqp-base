@@ -55,7 +55,7 @@ amqp:
 
       # the name of the channel that w can use for the exchange
       # the name as to be defined soewhere in the current file configuration
-      channel:          base
+      channel:          base-non-di
 
       # the type of the exchange
       # currently supported: AMQP_EX_TYPE_DIRECT, AMQP_EX_TYPE_FANOUT,
@@ -206,7 +206,7 @@ amqp:
 
       # the name of the channel that w can use for the exchange
       # the name as to be defined soewhere in the current file configuration
-      channel:          base
+      channel:          base-non-di
 
       # declare the dependencies for the current queue
       # a queue can have dependencies on a specific exchange (for bindings foe example)

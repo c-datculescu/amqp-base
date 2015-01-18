@@ -1,0 +1,40 @@
+services:
+  # the file locator for retrieving and locating the configuration files
+  fileLocator:
+    synthetic: true
+
+  # the amqp configuration
+  amqpConfigObject:
+    class: Amqp\Base\Config\Amqp
+
+  # the definition processor which will compare our definition vs what we have in the file
+  processor:
+    class: Symfony\Component\Config\Definition\Processor
+
+  # the yaml configuration loader that can read and parse the definitions from yaml configuration files
+  yamlConfigLoader:
+    class: Amqp\Base\Config\YamlConfigLoader
+    arguments:
+      - "@fileLocator"
+
+  # declaration of the factory that delivers the configuration
+  configuration.factory:
+    class: Amqp\Base\Config\Processor
+    arguments:
+      - "@yamlConfigLoader"
+      - "@fileLocator"
+      - "@processor"
+
+  # the actual amqp configuration
+  amqpConfiguration:
+    class: Array
+    factory: ["@configuration.factory", getDefinition]
+    arguments:
+      - config
+      - "@amqpConfigObject"
+
+  # the amqp builder that we can use to retrieve the raw components from the configuration
+  amqpBuilder:
+    class: Amqp\Base\Builder\Amqp
+    arguments:
+      - "@amqpConfiguration"

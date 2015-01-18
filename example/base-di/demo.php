@@ -7,16 +7,18 @@ use \Symfony\Component\DependencyInjection\ContainerBuilder;
 use \Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use \Symfony\Component\Config\FileLocator;
 
-require_once "../vendor/autoload.php";
-
-$file = array(__DIR__);
+require_once __DIR__ . "/../../vendor/autoload.php";
+$file = array(__DIR__ . "/../config/");
 
 $container = new ContainerBuilder();
+$locator = new FileLocator($file);
 $loader = new YamlFileLoader(
     $container,
-    new FileLocator($file)
+    $locator
 );
 $loader->load('services.yml');
+$container->set('fileLocator', $locator);
+
 
 /** @var Builder\Amqp $res */
 $res = $container->get('amqpBuilder');

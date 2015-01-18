@@ -1,11 +1,13 @@
 <?php
-namespace Config;
+namespace Amqp\Base\Config;
 
+use Amqp\Base\Interfaces\NamedConfigInterface;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Processor as s2processor;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\LoaderInterface;
 
-class Processor
+class Processor implements Interfaces\Processor
 {
     /**
      * The directories where we can find out the configuration files
@@ -34,8 +36,8 @@ class Processor
      */
     protected $definitions = array(
         'amqp'      => array(),
-        'listeners' => array(),
         'consumers' => array(),
+        'publishers' => array(),
     );
 
     /**
@@ -47,28 +49,24 @@ class Processor
         LoaderInterface $loader,
         FileLocator $locator,
         s2processor $processor
-
     ) {
         $this->loader = $loader;
         $this->locator = $locator;
         $this->processor = $processor;
     }
 
-    /**
-     * Retrieves the configuration for the main amqp defintions
-     *
-     * @param string      $file         The file that we should have the configuration in
-     * @param AmqpConfig  $configurator The configuration type (allowed types are amqp, listener, publisher)
-     *
-     * @return array
-     */
-    public function getAmqpDefinition(
-        $file,
-        AmqpConfig $configurator
-    ) {
+
+    public function getDefinition($file, ConfigurationInterface $configurator, $type = '')
+    {
+        if ($type == '') {
+            if ($configurator instanceof NamedConfigInterface) {
+                $type = $configurator->getType();
+            }
+        }
+
         // returns the cached version of the configuration
-        if (!empty($this->definitions['amqp'])) {
-            return $this->definitions['amqp'];
+        if (!empty($this->definitions[$type])) {
+            return $this->definitions[$type];
         }
 
         // find the yml file
@@ -80,7 +78,7 @@ class Processor
         // process and validate the configuration
         $processedConfiguration = $this->processor->processConfiguration($configurator, $configurationValues);
 
-        $this->definitions['amqp'] = $processedConfiguration;
+        $this->definitions[$type] = $processedConfiguration;
 
         return $processedConfiguration;
     }

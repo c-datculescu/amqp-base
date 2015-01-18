@@ -1,0 +1,13 @@
+publisher:
+  publisher-test:
+
+    # the publisher can be of multiple types
+    # type simple:    every message gets dispatched as soon as possible
+    # type rpc:       publishes a message and awaits for a response on a specific channel
+    type:                     simple
+
+    # the exchange on where we would publish
+    exchange:                 test
+
+    # timeout in seconds
+    timeout:                  100000000

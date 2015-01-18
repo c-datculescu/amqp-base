@@ -1,5 +1,5 @@
 <?php
-namespace Config;
+namespace Amqp\Base\Config;
 
 use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\Yaml\Yaml;

@@ -1,0 +1,61 @@
+amqp:
+  baseConnection:
+    live: &baseLive {host: [localhost], port: 5672, login: guest, password: guest, vhost: /}
+
+  baseChannel:
+    base: &baseChannQOS {count: 100}
+
+  baseExchange:
+    base: &baseExchDurable {flags: [AMQP_DURABLE]}
+
+  baseQueue:
+    base: &baseQueueDurable {flags: [AMQP_DURABLE]}
+
+  connection:
+    live:
+      <<:                   *baseLive
+
+  channel:
+    live:
+      <<:                   *baseChannQOS
+      connection:           live
+
+  exchange:
+    default:
+      isDefault:            true
+      channel:              live
+    rpc_test:
+      <<:                   *baseExchDurable
+      channel:              live
+      name:
+        name:               rpc_test
+        type:               constant
+      type:                 AMQP_EX_TYPE_DIRECT
+
+  queue:
+    rpc_test:
+      channel:              live
+      name:
+        name:               rpc_test
+        type:               constant
+      flags:                [AMQP_DURABLE]
+      dependencies:
+        exchange:
+          - rpc_test
+      bindings:
+        -
+          exchange:         rpc_test
+          routingKey:       test.rpc
+
+consumer:
+  consumer:
+    rpc_test:
+      class:                Amqp\Util\Listener\Rpc
+      queue:                rpc_test
+
+publisher:
+  publisher:
+    rpc_test:
+      class:                    Amqp\Util\Publisher\Rpc
+      exchange:                 rpc_test
+      timeout:                  10000000

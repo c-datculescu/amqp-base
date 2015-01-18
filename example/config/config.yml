@@ -27,7 +27,7 @@ amqp:
       channel:              live
       <<:                   *baseExchDurable
       name:
-        name:               test
+        name:               shop.club.dev
         type:               constant
       type:                 AMQP_EX_TYPE_TOPIC
       ae:                   shop.club.dev.error
@@ -108,3 +108,42 @@ amqp:
         -
           exchange:         shop.club.dev.error
           routingKey:       deadlettered
+
+consumer:
+  monitors:
+    memory:       &memoryUsage
+      class:                Amqp\Util\Monitor\Memory
+      arguments:
+        limit:              100M
+    count:        &messageCount
+      class:                Amqp\Util\Monitor\MessageCounter
+      arguments:
+        limit:              100
+    controlFile:  &controlFile
+      class:                Amqp\Util\Monitor\FileChange
+      arguments:
+        file:               /var/log/httpd
+
+  consumer:
+    consumer-test:
+      class:                Amqp\Util\Listener\Simple
+      queue:                test
+      onProcessError:       requeue
+      maxRequeue:           3
+      watchers:
+        -
+          <<:               *memoryUsage
+        -
+          <<:               *messageCount
+          arguments:
+            limit:          100
+        -
+          <<:               *controlFile
+          arguments:
+            file:           /var/log/test
+publisher:
+  publisher:
+    publisher-test:
+      class:                    Amqp\Util\Publisher\Simple
+      exchange:                 shop.club.dev
+      timeout:                  100000000

@@ -1,0 +1,51 @@
+monitors:
+  memory:       &memoryUsage
+    class:                Amqp\Util\Monitor\Memory
+    arguments:
+      # the arguments represent method calls with parameters on the initialized class
+      # the method is assumed to exist on the called class
+      limit:              100
+  count:        &messageCount
+    class:                Amqp\Util\Monitor\MessageCounter
+    arguments:
+      limit:              100
+  controlFile:  &controlFile
+    class:                Amqp\Util\Monitor\FileChange
+    arguments:
+      file:               /var/log/httpd
+
+consumer:
+  consumer-test:
+
+    # the type of consumer. Can be one of: simple, rpc, getOne
+    # simple: issues blocking consume and awaits for messages incoming on the queue using amqp's consume method
+    # rpc: issues blocking consume and for every message processed responds to the specified reply_to queue
+    type:                 simple
+
+    # the queue on which we need to listen for incoming messages
+    queue:                test-queue
+
+    # behavior on failed process. Can be one of: requeue, error, stop, continue
+    onProcessError:       requeue
+
+    # if on processing we get an error, how many times we will requeue the message before not requeing it anymore
+    maxRequeue:           3
+
+    # watchers. Those are special processors capable on stopping the consumer on various operations
+    # the default provided watchers are:
+    # memory: watches memory consumption in the listener. As soon as it goes over the specified value, it shuts down the
+    # listener
+    # count: stops the listeners when the specified number of messages has been read
+    # file: a special watcher that stops the listener when a file has changed. Useful for reloading when code has
+    # changed (for example new version has been deployed)
+    watchers:
+      -
+        <<:               *memoryUsage
+      -
+        <<:               *messageCount
+        arguments:
+          limit:          100
+      -
+        <<:               *controlFile
+        arguments:
+          file:           /var/log/test

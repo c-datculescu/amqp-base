@@ -15,13 +15,13 @@
     "require": {
         "symfony/yaml": "~2.6",
         "symfony/config": "~2.6",
+        "symfony/dependency-injection": "~2.6",
 
         "ext-amqp": ">=1.0"
     },
     "autoload": {
         "psr-0": {
-            "Builder":      "src/",
-            "Config":       "src/"
+            "Amqp":         "src/"
         }
     },
     "minimum-stability": "dev"
