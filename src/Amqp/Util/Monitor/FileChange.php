@@ -59,7 +59,7 @@ class FileChange implements Monitor
     protected function readMtime()
     {
         if (!file_exists($this->filePath) || !is_readable($this->filePath)) {
-            throw new \Exception("Cannot load control file for checking changes!");
+            throw new Exception("Cannot load control file for checking changes!");
         }
 
         $modifiedTime = filemtime($this->filePath);

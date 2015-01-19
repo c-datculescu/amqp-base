@@ -40,7 +40,7 @@ class Publisher implements Interfaces\Publisher
         }
 
         if (!isset($this->configuration['publisher'][$name])) {
-            throw new \Exception("Cannot locate the definition for publisher " . $name);
+            throw new Exception("Cannot locate the definition for publisher " . $name);
         }
 
         // initialize the listener

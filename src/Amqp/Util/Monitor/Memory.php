@@ -27,7 +27,7 @@ class Memory implements LimitMonitor
 
         $allowedExtensions = array('B', 'K', 'M', 'G');
         if (!in_array($memoryMultiplier, $allowedExtensions)) {
-            throw new \Exception('Invalid memory value for memory limit!');
+            throw new Exception('Invalid memory value for memory limit!');
         }
 
         // get the value of the constant

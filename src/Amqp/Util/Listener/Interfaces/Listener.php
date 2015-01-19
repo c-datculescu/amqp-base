@@ -1,7 +1,7 @@
 <?php
 namespace Amqp\Util\Listener\Interfaces;
 
-use Amqp\Util\Interfaces\Monitor;
+use Amqp\Util\Monitor\Interfaces\Monitor;
 use Amqp\Util\Interfaces\Processor;
 use \AMQPEnvelope;
 

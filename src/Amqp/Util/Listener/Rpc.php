@@ -69,7 +69,7 @@ class Rpc extends Simple
      * @param AMQPEnvelope $message  The message to be processed
      * @param bool         $response The response that was retrieved from the processor
      *
-     * @throws \Exception If the response cannot be republished
+     * @throws Exception If the response cannot be republished
      */
     protected function publishResponse(AMQPEnvelope $message, $response = false)
     {
@@ -81,7 +81,7 @@ class Rpc extends Simple
         $result = $exchange->publish($response, $message->getReplyTo());
 
         if ($result === false) {
-            throw new \Exception('Cannot publish response on reply queue!');
+            throw new Exception('Cannot publish response on reply queue!');
         }
     }
 }

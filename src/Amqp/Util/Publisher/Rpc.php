@@ -65,7 +65,7 @@ class Rpc implements Interfaces\Rpc
     public function publish($message, $routingKey = '', array $properties = array())
     {
         if (!isset($this->configuration['exchange'])) {
-            throw new \Exception('No exchange declared for the current publisher!');
+            throw new Exception('No exchange declared for the current publisher!');
         }
 
         $exchange = $this->builder->exchange($this->configuration['exchange']);
@@ -84,7 +84,7 @@ class Rpc implements Interfaces\Rpc
         $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
 
         if ($response == false) {
-            throw new \Exception('Message not published!');
+            throw new Exception('Message not published!');
         }
 
         // loop
