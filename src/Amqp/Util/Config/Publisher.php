@@ -42,6 +42,9 @@ class Publisher implements ConfigurationInterface, NamedConfigInterface
         return $treeBuilder;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getType()
     {
         return 'publisher';

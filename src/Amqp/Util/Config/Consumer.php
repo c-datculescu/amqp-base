@@ -56,6 +56,9 @@ class Consumer implements ConfigurationInterface, NamedConfigInterface
         return $treeBuilder;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getType()
     {
         return 'consumer';
