@@ -1,7 +1,7 @@
 <?php
 namespace Amqp\Util\Monitor;
 
-use Amqp\Util\Interfaces\LimitMonitor;
+use Amqp\Util\Monitor\Interfaces\LimitMonitor;
 use Amqp\Util\Listener\Interfaces\Listener;
 
 class Memory implements LimitMonitor

@@ -1,7 +1,7 @@
 <?php
 namespace Amqp\Util\Publisher;
 
-use Amqp\Base\Builder\Amqp;
+use Amqp\Base\Builder\Interfaces\Amqp;
 use Amqp\Util\Publisher\Interfaces\Publisher;
 
 class Simple implements Publisher

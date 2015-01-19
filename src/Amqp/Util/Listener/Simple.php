@@ -3,7 +3,7 @@ namespace Amqp\Util\Listener;
 
 use Amqp\Util\Interfaces\Monitor;
 use Amqp\Util\Listener\Interfaces\Listener;
-use Amqp\Base\Builder\Amqp;
+use Amqp\Base\Builder\Interfaces\Amqp;
 use Amqp\Util\Interfaces\Processor;
 
 use \AMQPQueue,

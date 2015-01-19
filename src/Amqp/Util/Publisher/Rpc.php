@@ -2,7 +2,7 @@
 namespace Amqp\Util\Publisher;
 
 use Amqp\Util\Interfaces\TimeoutProcessor;
-use Amqp\Base\Builder\Amqp;
+use Amqp\Base\Builder\Interfaces\Amqp;
 use \AMQPExchange,
     \AMQPQueue,
     \AMQPEnvelope;

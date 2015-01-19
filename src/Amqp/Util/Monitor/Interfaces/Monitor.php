@@ -1,5 +1,5 @@
 <?php
-namespace Amqp\Util\Interfaces;
+namespace Amqp\Util\Monitor\Interfaces;
 
 use Amqp\Util\Listener\Interfaces\Listener;
 

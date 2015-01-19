@@ -1,10 +1,15 @@
 <?php
 namespace Amqp\Util\Builder;
 
-use Amqp\Base\Builder\Amqp;
+use Amqp\Base\Builder\Interfaces\Amqp;
 
-class Listener
+class Listener implements Interfaces\Listener
 {
+    /**
+     * Current local configuration
+     *
+     * @var array
+     */
     protected $configuration = array();
 
     /**
@@ -12,14 +17,24 @@ class Listener
      */
     protected $amqpBuilder;
 
+    /**
+     * @var \Amqp\Util\Listener\Interfaces\Listener[]
+     */
     protected $listeners = array();
 
+    /**
+     * @param array $configuration The configuration
+     * @param Amqp  $builder       The Amqp Builder
+     */
     public function __construct(array $configuration, Amqp $builder)
     {
         $this->configuration = $configuration;
         $this->amqpBuilder = $builder;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function listener($name)
     {
         if (isset($this->listeners[$name])) {
@@ -27,7 +42,7 @@ class Listener
         }
 
         if (!isset($this->configuration['consumer'][$name])) {
-            throw new \Exception("Cannot locate the definition for listener " . $name);
+            throw new Exception("Cannot locate the definition for listener " . $name);
         }
 
         // initialize the listener

@@ -1,7 +1,7 @@
 <?php
 namespace Amqp\Util\Monitor;
 
-use Amqp\Util\Interfaces\Monitor;
+use Amqp\Util\Monitor\Interfaces\Monitor;
 use Amqp\Util\Listener\Interfaces\Listener;
 
 class FileChange implements Monitor

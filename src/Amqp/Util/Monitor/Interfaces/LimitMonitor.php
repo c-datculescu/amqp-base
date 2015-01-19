@@ -1,5 +1,5 @@
 <?php
-namespace Amqp\Util\Interfaces;
+namespace Amqp\Util\Monitor\Interfaces;
 
 interface LimitMonitor extends Monitor
 {
