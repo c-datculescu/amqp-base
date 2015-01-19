@@ -8,7 +8,7 @@ use \Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use \Symfony\Component\Config\FileLocator;
 
 require_once __DIR__ . "/../../vendor/autoload.php";
-$file = array(__DIR__ . "/../config/");
+$file = array(__DIR__ . "/config/");
 
 $container = new ContainerBuilder();
 $locator = new FileLocator($file);
@@ -20,7 +20,7 @@ $loader->load('services.yml');
 $container->set('fileLocator', $locator);
 
 
-/** @var Builder\Amqp $res */
+/** @var \Amqp\Base\Builder\Amqp $res */
 $res = $container->get('amqpBuilder');
 
 // retrieve an exchange

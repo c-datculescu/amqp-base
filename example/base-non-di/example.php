@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$configDir = array(__DIR__ . '/../config/');
+$configDir = array(__DIR__ . '/config/');
 
 // initialize the base-non-di components:
 // the file locator to be used when searching for configuration
@@ -33,6 +33,3 @@ $queue = $builder->queue('test', false);
 
 // get a exchange
 $exchange = $builder->exchange('shop.club.dev');
-
-// what if it is a recursive definition?
-$exchange = $builder->exchange('lol');
