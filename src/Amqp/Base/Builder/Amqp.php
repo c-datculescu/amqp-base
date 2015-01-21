@@ -167,7 +167,7 @@ class Amqp implements Interfaces\Amqp
 
         $queue = new AMQPQueue($this->channel($configuration['channel']));
 
-        $queue->setName($this->getName($configuration['name']));
+        $queue->setName(isset($configuration['name']) ? $this->getName($configuration['name']) : $queueName);
         $queue->setFlags($this->buildBitmask($configuration['flags']));
         if (isset($configuration['arguments'])) {
             $queue->setArguments($this->getQueueProperties($configuration['arguments']));
@@ -236,9 +236,8 @@ class Amqp implements Interfaces\Amqp
             return $exchange;
         }
 
-        if (isset($configuration['name'])) {
-            $exchange->setName($this->getName($configuration['name']));
-        }
+        $exchange->setName(isset($configuration['name']) ? $this->getName($configuration['name']) : $exchangeName);
+
         if (isset($configuration['flags'])) {
             $exchange->setFlags($this->buildBitmask($configuration['flags']));
         }

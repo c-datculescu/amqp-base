@@ -14,7 +14,6 @@ class Amqp implements ConfigurationInterface, NamedConfigInterface
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('amqp');
-
         $rootNode
             ->ignoreExtraKeys()
             ->children()
@@ -115,6 +114,7 @@ class Amqp implements ConfigurationInterface, NamedConfigInterface
                             ->end()
                             ->arrayNode('bindings')
                                 ->prototype('array')
+                                    ->ignoreExtraKeys()
                                     ->children()
                                         ->scalarNode('exchange')
                                             ->isRequired()
@@ -194,6 +194,7 @@ class Amqp implements ConfigurationInterface, NamedConfigInterface
                             ->end()
                             ->arrayNode('bindings')
                                 ->prototype('array')
+                                    ->ignoreExtraKeys()
                                     ->children()
                                         ->scalarNode('exchange')
                                             ->isRequired()
