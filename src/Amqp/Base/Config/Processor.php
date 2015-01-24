@@ -1,7 +1,7 @@
 <?php
 namespace Amqp\Base\Config;
 
-use Amqp\Base\Interfaces\NamedConfigInterface;
+use Amqp\Base\Config\Interfaces\NamedConfigInterface;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Processor as s2processor;
 use Symfony\Component\Config\FileLocator;

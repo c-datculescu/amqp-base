@@ -1,7 +1,7 @@
 <?php
 namespace Amqp\Util\Config;
 
-use Amqp\Base\Interfaces\NamedConfigInterface;
+use Amqp\Base\Config\Interfaces\NamedConfigInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 

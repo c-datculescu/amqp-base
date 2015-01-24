@@ -1,5 +1,5 @@
 <?php
-namespace Amqp\Base\Interfaces;
+namespace Amqp\Base\Config\Interfaces;
 
 interface NamedConfigInterface
 {
