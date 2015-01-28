@@ -78,8 +78,10 @@ class Processor implements Interfaces\Processor
         // process and validate the configuration
         $processedConfiguration = $this->processor->processConfiguration($configurator, $configurationValues);
 
-        $this->definitions[$type] = $processedConfiguration;
+        $configObject = new ConfigWrapper($processedConfiguration);
 
-        return $processedConfiguration;
+        $this->definitions[$type] = $configObject;
+
+        return $configObject;
     }
 }

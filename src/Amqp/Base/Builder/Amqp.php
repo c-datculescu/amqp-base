@@ -8,6 +8,7 @@
  */
 namespace Amqp\Base\Builder;
 
+use Amqp\Base\Config\ConfigWrapper;
 use \AMQPConnection,
     \AMQPChannel,
     \AMQPQueue,
@@ -50,11 +51,11 @@ class Amqp implements Interfaces\Amqp
     );
 
     /**
-     * @param array $amqpConfiguration The configuration for the queues/exchanges/channels/connections
+     * @param ConfigWrapper $amqpConfiguration The configuration for the queues/exchanges/channels/connections
      */
-    public function __construct(array $amqpConfiguration)
+    public function __construct(ConfigWrapper $amqpConfiguration)
     {
-        $this->amqpConfiguration = $amqpConfiguration;
+        $this->amqpConfiguration = $amqpConfiguration->getConfig();
     }
 
     /**

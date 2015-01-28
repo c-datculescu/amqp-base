@@ -2,13 +2,14 @@
 namespace Amqp\Util\Builder;
 
 use Amqp\Base\Builder\Interfaces\Amqp;
+use Amqp\Base\Config\Interfaces\Config;
 
 class Listener implements Interfaces\Listener
 {
     /**
      * Current local configuration
      *
-     * @var array
+     * @var Config
      */
     protected $configuration = array();
 
@@ -23,12 +24,12 @@ class Listener implements Interfaces\Listener
     protected $listeners = array();
 
     /**
-     * @param array $configuration The configuration
-     * @param Amqp  $builder       The Amqp Builder
+     * @param Config $configuration The configuration
+     * @param Amqp   $builder       The Amqp Builder
      */
-    public function __construct(array $configuration, Amqp $builder)
+    public function __construct(Config $configuration, Amqp $builder)
     {
-        $this->configuration = $configuration;
+        $this->configuration = $configuration->getConfig();
         $this->amqpBuilder = $builder;
     }
 

@@ -2,6 +2,7 @@
 namespace Amqp\Util\Builder;
 
 use Amqp\Base\Builder\Interfaces\Amqp;
+use Amqp\Base\Config\Interfaces\Config;
 
 class Publisher implements Interfaces\Publisher
 {
@@ -21,12 +22,12 @@ class Publisher implements Interfaces\Publisher
     protected $amqpBuilder;
 
     /**
-     * @param array $configuration The current configuration
-     * @param Amqp  $builder       The builder for the amqp configuration
+     * @param Config $configuration The current configuration
+     * @param Amqp   $builder       The builder for the amqp configuration
      */
-    public function __construct(array $configuration, Amqp $builder)
+    public function __construct(Config $configuration, Amqp $builder)
     {
-        $this->configuration = $configuration;
+        $this->configuration = $configuration->getConfig();
         $this->amqpBuilder = $builder;
     }
 
