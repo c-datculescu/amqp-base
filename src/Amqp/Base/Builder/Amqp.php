@@ -9,6 +9,7 @@
 namespace Amqp\Base\Builder;
 
 use Amqp\Base\Config\ConfigWrapper;
+use Amqp\Base\Config\Processor;
 use \AMQPConnection,
     \AMQPChannel,
     \AMQPQueue,
@@ -51,11 +52,11 @@ class Amqp implements Interfaces\Amqp
     );
 
     /**
-     * @param ConfigWrapper $amqpConfiguration The configuration for the queues/exchanges/channels/connections
+     * @param Processor $configFactory
      */
-    public function __construct(ConfigWrapper $amqpConfiguration)
+    public function __construct(Processor $configFactory)
     {
-        $this->amqpConfiguration = $amqpConfiguration->getConfig();
+        $this->amqpConfiguration = $configFactory->getDefinition(new \Amqp\Base\Config\Amqp())->getConfig();
     }
 
     /**

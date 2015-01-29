@@ -1,40 +1,38 @@
 <?php
+
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$configDir = array(__DIR__ . '/config/');
-
-// initialize the base-non-di components:
-// the file locator to be used when searching for configuration
-$fileLocator = new Symfony\Component\Config\FileLocator($configDir);
-
-// the processor for validating the definitions imported from configuration
-$definitionProcessor = new Symfony\Component\Config\Definition\Processor;
-
-// create the config loader
-$configLoader = new \Amqp\Base\Config\YamlConfigLoader($fileLocator);
+$loader = new \Amqp\Base\Config\YamlConfigLoader();
+$config = $loader->load(__DIR__ . '/config/config.yml');
 
 // initialize the configuration factory
-$configFactory = new \Amqp\Base\Config\Processor($configLoader, $fileLocator, $definitionProcessor);
-
-// retrieve the configurations for publishers/consumers/amqp
-$configAmqp = $configFactory->getDefinition('config', new \Amqp\Base\Config\Amqp());
+$configFactory = new \Amqp\Base\Config\Processor($config);
 
 // set up the base-non-di builder
-$builder = new Amqp\Base\Builder\Amqp($configAmqp);
+$builder = new Amqp\Base\Builder\Amqp($configFactory);
 
-$configListeners = $configFactory->getDefinition('config', new \Amqp\Util\Config\Consumer());
-
-// initialize the listener builder
-$consumerBuilder = new \Amqp\Util\Builder\Listener($configListeners, $builder);
-$consumer = $consumerBuilder->listener('consumer_test');
+$listener = new \Amqp\Util\Listener\Simple(array(
+    'queue'          => 'test',
+    'onProcessError' => 'requeue',
+    'bulkAck'        => '50'
+), $builder);
 
 class Processor implements \Amqp\Util\Interfaces\Processor
 {
     public function process(\AMQPEnvelope $message)
     {
-        echo $message->getBody() . "\n";
+        echo 'FOO:' . $message->getBody() . "\n";
     }
 }
 
-$consumer->attachProcessor(new Processor());
-$consumer->listen();
+class Processor2 extends Processor
+{
+    public function process(\AMQPEnvelope $message)
+    {
+        parent::process($message);
+        echo 'BAR:' . $message->getBody() . "\n";
+    }
+}
+
+$listener->setProcessor(new Processor2());
+$listener->listen();

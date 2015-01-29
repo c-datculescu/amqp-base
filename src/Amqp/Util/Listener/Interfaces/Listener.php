@@ -20,7 +20,7 @@ interface Listener
      *
      * @return $this
      */
-    public function attachProcessor(Processor $processor);
+    public function setProcessor(Processor $processor);
 
     /**
      * Attaches a monitor to the current listener. The monitors are special handlers that can stp the execution of

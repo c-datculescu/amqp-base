@@ -1,30 +1,21 @@
 <?php
 namespace Amqp\Base\Config;
 
-use Symfony\Component\Config\Loader\FileLoader;
 use Symfony\Component\Yaml\Yaml;
 
-class YamlConfigLoader extends FileLoader
+class YamlConfigLoader
 {
     /**
      * {@inheritdoc}
      */
-    public function load($resource, $type = null)
+    public function load($filename)
     {
-        if (file_exists($resource) || !is_readable($resource)) {
-            $configurationValues = Yaml::parse(file_get_contents($resource));
+        if (file_exists($filename) || !is_readable($filename)) {
+            $configurationValues = Yaml::parse(file_get_contents($filename));
         } else {
-            throw new Exception("Error: Invalid file descriptor " . $resource);
+            throw new Exception("Error: Invalid file descriptor " . $filename);
         }
 
         return $configurationValues;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function supports($resource, $type = null)
-    {
-        return is_string($resource) && pathinfo($resource, PATHINFO_EXTENSION) === 'yml';
     }
 }

@@ -1,7 +1,9 @@
 <?php
 namespace Amqp\Base\Config\Interfaces;
 
-interface NamedConfigInterface
+use Symfony\Component\Config\Definition\ConfigurationInterface;
+
+interface NamedConfigInterface extends ConfigurationInterface
 {
     /**
      * Returns the type of configuration for which this configurator applies
