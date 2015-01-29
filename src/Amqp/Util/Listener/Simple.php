@@ -69,7 +69,7 @@ class Simple implements Listener
     /**
      * {@inheritdoc}
      */
-    public function attachProcessor(Processor $processor)
+    public function setProcessor(Processor $processor)
     {
         $this->processor = $processor;
         return $this;

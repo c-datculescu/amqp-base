@@ -56,7 +56,7 @@ class Amqp implements Interfaces\Amqp
      */
     public function __construct(Processor $configFactory)
     {
-        $this->amqpConfiguration = $configFactory->getDefinition(new \Amqp\Base\Config\Amqp());
+        $this->amqpConfiguration = $configFactory->getDefinition(new \Amqp\Base\Config\Amqp())->getConfig();
     }
 
     /**

@@ -28,6 +28,7 @@ class Processor implements Interfaces\Processor
 
     public function __construct(array $config) {
         $this->config = $config;
+        $this->processor = new \Symfony\Component\Config\Definition\Processor();
     }
 
     public function getDefinition(NamedConfigInterface $configurator)
