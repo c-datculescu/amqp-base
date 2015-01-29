@@ -1,6 +1,6 @@
 amqp:
   baseConnection:
-    live: &baseLive {host: [localhost], port: 5672, login: admin, password: admin, vhost: /}
+    live: &baseLive {host: [localhost], port:5672, login:guest, password:guest, vhost:/}
 
   baseChannel:
     base: &baseChannQOS {count: 100}
@@ -40,10 +40,3 @@ amqp:
       dependencies:
         exchange:
           - test
-consumer:
-  consumer:
-    consumer-test:
-      class:                Amqp\Util\Listener\Simple
-      queue:                test
-      onProcessError:       requeue
-      bulkAck:              50

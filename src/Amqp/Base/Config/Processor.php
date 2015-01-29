@@ -2,17 +2,14 @@
 namespace Amqp\Base\Config;
 
 use Amqp\Base\Config\Interfaces\NamedConfigInterface;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Config\Definition\Processor as s2processor;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Config\Definition\Processor as DefinitionProcessor;
 
 class Processor implements Interfaces\Processor
 {
     protected $config;
 
     /**
-     * @var s2processor
+     * @var DefinitionProcessor
      */
     protected $processor;
 
@@ -26,9 +23,9 @@ class Processor implements Interfaces\Processor
         'publishers' => array(),
     );
 
-    public function __construct(array $config) {
-        $this->config = $config;
-        $this->processor = new \Symfony\Component\Config\Definition\Processor();
+    public function __construct(Interfaces\Loader $loader) {
+        $this->config = $loader->load();
+        $this->processor = new DefinitionProcessor();
     }
 
     public function getDefinition(NamedConfigInterface $configurator)
