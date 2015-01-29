@@ -37,6 +37,11 @@ class Simple implements Listener
     protected $queue;
 
     /**
+     * @var int
+     */
+    protected $nackCounter = 0;
+
+    /**
      * @param array $configuration The configuration array
      * @param Amqp  $builder       The Amqp builder
      */
@@ -85,9 +90,14 @@ class Simple implements Listener
     public function consume(AMQPEnvelope $message)
     {
         $stopOnError = $this->configuration['onProcessError'];
+        $bulkAck = $this->configuration['bulkAck'];
 
         $stopListener = false;
         $isProcessed = false;
+
+        if ($bulkAck > 0) {
+            $this->nackCounter++;
+        }
 
         // message received, notify all the processors about it
         $result = $this->processor->process($message);
@@ -100,11 +110,22 @@ class Simple implements Listener
                     break;
                 case 'error':
                     // nack the message, most likely should go to an error queue
-                    $this->queue->nack($message->getDeliveryTag());
+                    if ($bulkAck != 0) {
+                        $this->queue->nack($message->getDeliveryTag(), AMQP_MULTIPLE);
+                        $this->nackCounter = 0;
+                    } else {
+                        $this->queue->nack($message->getDeliveryTag());
+                    }
+
                     break;
                 case 'stop':
                     // ack the message
-                    $this->queue->ack($message->getDeliveryTag());
+                    if ($bulkAck != 0) {
+                        $this->queue->ack($message->getDeliveryTag(), AMQP_MULTIPLE);
+                        $this->nackCounter = 0;
+                    } else {
+                        $this->queue->ack($message->getDeliveryTag());
+                    }
                     $stopListener = true;
                     break;
             }
@@ -112,8 +133,14 @@ class Simple implements Listener
             $isProcessed = true;
         }
 
+
         if ($isProcessed === false) {
-            $this->queue->ack($message->getDeliveryTag());
+            if ($bulkAck != 0 && $this->nackCounter === $bulkAck) {
+                $this->queue->ack($message->getDeliveryTag(), AMQP_MULTIPLE);
+                $this->nackCounter = 0;
+            } else if ($bulkAck == 0) {
+                $this->queue->ack($message->getDeliveryTag());
+            }
         }
 
         // notify all the watchers

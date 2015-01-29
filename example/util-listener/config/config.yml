@@ -1,0 +1,49 @@
+amqp:
+  baseConnection:
+    live: &baseLive {host: [localhost], port: 5672, login: admin, password: admin, vhost: /}
+
+  baseChannel:
+    base: &baseChannQOS {count: 100}
+
+  baseExchange:
+    base: &baseExchDurable {flags: [AMQP_DURABLE]}
+
+  baseQueue:
+    base: &baseQueueDurable {flags: [AMQP_DURABLE]}
+
+  connection:
+    live:
+      <<:                   *baseLive
+      login:                guest
+      password:             guest
+
+  channel:
+    live:
+      <<:                   *baseChannQOS
+      connection:           live
+
+  exchange:
+    test:
+      channel:              live
+      name:
+        name:               test-exchange
+        type:               constant
+      type:                 AMQP_EX_TYPE_DIRECT
+      flags:                [AMQP_DURABLE]
+  queue:
+    test:
+      channel:              live
+      name:
+        name:               test-queue
+        type:               constant
+      flags:                [AMQP_DURABLE]
+      dependencies:
+        exchange:
+          - test
+consumer:
+  consumer:
+    consumer-test:
+      class:                Amqp\Util\Listener\Simple
+      queue:                test
+      onProcessError:       requeue
+      bulkAck:              50
