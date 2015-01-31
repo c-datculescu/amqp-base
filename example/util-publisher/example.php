@@ -1,23 +1,13 @@
 <?php
+
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$loader = new \Amqp\Base\Config\YamlConfigLoader(__DIR__ . '/../util-listener/config/config.yml');
-// initialize the configuration factory
-$configFactory = new \Amqp\Base\Config\Processor($loader);
+$container = new \Symfony\Component\DependencyInjection\ContainerBuilder();
+$loader = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader($container, new \Symfony\Component\Config\FileLocator(__DIR__ . '/config'));
+$loader->load('services.yml');
+$container->setParameter('config_path', __DIR__ . '/config');
 
-// set up the base-non-di builder
-$builder = new Amqp\Base\Builder\Amqp($configFactory);
-
-// 
-$publisher = new Amqp\Util\Publisher\Simple(array(
-    'exchange' =>  'test',
-    'timeout' => '100000000'
-), $builder);
-
-for ($i = 0; $i < 10; $i++) {
-    $publisher->publish('test message ' . time(), '');
-    sleep(1);
-    echo $i . PHP_EOL;
-}
+$publisher = $container->get('publisher.demo');
+$publisher->publish("test", "routing-key");
 
 

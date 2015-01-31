@@ -16,9 +16,8 @@ class Simple implements Publisher
     protected $exchange;
 
 
-    public function __construct(array $configuration, Amqp $builder)
+    public function __construct(Amqp $builder)
     {
-        $this->configuration = $configuration;
         $this->builder = $builder;
     }
 

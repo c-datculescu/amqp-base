@@ -1,0 +1,7 @@
+services:
+  publisher.demo:
+    class: \Amqp\Util\Publisher\Simple
+    factory: ["@publisher.builder", publisher]
+    arguments:
+      - "@publisher.type.demo"
+      - test

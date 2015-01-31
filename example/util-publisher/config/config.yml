@@ -1,0 +1,33 @@
+amqp:
+  baseConnection:
+    live: &baseLive {host: [localhost], port:5672, login:guest, password:guest, vhost:/}
+
+  baseChannel:
+    base: &baseChannQOS {count: 100, connection: live}
+
+  baseExchange:
+    base: &baseExchDurable {flags: [AMQP_DURABLE], channel: live}
+
+  baseQueue:
+    base: &baseQueueDurable {flags: [AMQP_DURABLE], channel: live}
+
+  connection:
+    live:
+      <<:                   *baseLive
+
+  channel:
+    live:
+      <<:                   *baseChannQOS
+
+  exchange:
+    test:
+      <<:                   *baseExchDurable
+      name:                 {name: test-exchange, type: constant}
+      type:                 AMQP_EX_TYPE_DIRECT
+  queue:
+    test:
+      <<:                   *baseQueueDurable
+      name:                 {name: test-queue, type: constant}
+      dependencies:
+        exchange:
+          - test

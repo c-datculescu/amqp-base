@@ -53,9 +53,8 @@ class Rpc implements Interfaces\Rpc
      */
     protected $replyQueue;
 
-    public function __construct(array $configuration, Amqp $builder)
+    public function __construct(Amqp $builder)
     {
-        $this->configuration = $configuration;
         $this->builder = $builder;
     }
 
@@ -219,5 +218,15 @@ class Rpc implements Interfaces\Rpc
         $queue->declareQueue();
 
         return $queue;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setConfiguration(array $configuration)
+    {
+        $this->configuration = $configuration;
+
+        return $this;
     }
 }
