@@ -29,4 +29,13 @@ interface Publisher
      * @return bool
      */
     public function publish($message, $routingKey = '', array $properties = array());
+
+    /**
+     * Sets the configuration for the current publisher
+     *
+     * @param array $configuration The configuration for the current publisher
+     *
+     * @return $this
+     */
+    public function setConfiguration(array $configuration);
 }

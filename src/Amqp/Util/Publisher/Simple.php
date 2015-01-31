@@ -39,4 +39,14 @@ class Simple implements Publisher
 
         return $response;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setConfiguration(array $configuration)
+    {
+        $this->configuration = $configuration;
+
+        return $this;
+    }
 }
