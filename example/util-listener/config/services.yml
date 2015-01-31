@@ -1,3 +1,4 @@
+# all the services we will use in our application
 imports:
   # include all the monitoring services we have defined
   - { resource: "listener.monitor.yml" }
@@ -39,7 +40,7 @@ services:
     arguments:
       - @listener.config.loader
 
-  listener.builder:
+  listener.factory:
     class: \Amqp\Util\Factory\Listener
     arguments:
       - @listener.config.factory

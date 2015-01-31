@@ -1,5 +1,4 @@
 <?php
-
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $container = new \Symfony\Component\DependencyInjection\ContainerBuilder();

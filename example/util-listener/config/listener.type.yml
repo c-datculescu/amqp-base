@@ -1,5 +1,6 @@
+# configures the actual listeners we will need to use in the application, attaching the monitors and the processors
+# so that we can get a fully configured instance from the factory
 services:
-  # define all the types of listeners we need to use in the application
   listener.type.demo:
     class: \Amqp\Util\Listener\Simple
     arguments:

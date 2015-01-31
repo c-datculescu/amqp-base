@@ -1,12 +1,11 @@
 imports:
-  # include all types of listeners we have defined
+  # publisher types
   - { resource: "publisher.type.yml" }
 
-  # include the listener instances we have defined
+  # publisher instances
   - { resource: "publisher.instance.yml" }
 
 services:
-  # define configurations for base amqp stuff
   amqp.config.loader:
     class: \Amqp\Base\Config\YamlConfigLoader
     arguments:

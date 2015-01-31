@@ -1,7 +1,8 @@
+# defines all the publisher instances that we might use in the application
 services:
   publisher.demo:
     class: \Amqp\Util\Publisher\Simple
     factory: ["@publisher.builder", publisher]
     arguments:
       - "@publisher.type.demo"
-      - rpc
+      - test

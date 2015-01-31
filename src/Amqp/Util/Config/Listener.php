@@ -13,12 +13,12 @@ class Listener implements ConfigurationInterface, NamedConfigInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('consumer');
+        $rootNode = $treeBuilder->root('listener');
 
         $rootNode
             ->ignoreExtraKeys()
             ->children()
-                ->arrayNode('consumer')
+                ->arrayNode('listener')
                     ->prototype('array')
                         ->children()
                             ->scalarNode('queue')

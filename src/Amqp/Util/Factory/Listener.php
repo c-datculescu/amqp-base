@@ -30,11 +30,11 @@ class Listener
      */
     public function listener(ListenerInterface $listenerType, $name)
     {
-        if (!isset($this->listenerConfiguration['consumer'][$name])) {
+        if (!isset($this->listenerConfiguration['listener'][$name])) {
             throw new \UnexpectedValueException("Cannot locate listener definition for " . $name . "!");
         }
 
-        $listenerType->setConfiguration($this->listenerConfiguration['consumer'][$name]);
+        $listenerType->setConfiguration($this->listenerConfiguration['listener'][$name]);
 
         return $listenerType;
     }

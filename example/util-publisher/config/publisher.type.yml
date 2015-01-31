@@ -1,5 +1,5 @@
+# define all the types of publishers we need to use in the application
 services:
-  # define all the types of publishers we need to use in the application
   publisher.type.demo:
     class: \Amqp\Util\Publisher\Simple
     arguments:

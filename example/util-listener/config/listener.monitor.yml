@@ -1,3 +1,4 @@
+# defines all the monitors we want to use for the listeners along with their settings
 services:
   # define monitors
   monitor.fileChange:

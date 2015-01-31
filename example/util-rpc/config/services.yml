@@ -48,7 +48,7 @@ services:
     arguments:
       - @listener.config.loader
 
-  listener.builder:
+  listener.factory:
     class: \Amqp\Util\Factory\Listener
     arguments:
       - @listener.config.factory
@@ -64,7 +64,7 @@ services:
     arguments:
       - @publisher.config.loader
 
-  publisher.builder:
+  publisher.factory:
     class: \Amqp\Util\Factory\Publisher
     arguments:
       - @publisher.config.factory

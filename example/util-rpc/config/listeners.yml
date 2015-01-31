@@ -1,5 +1,5 @@
-consumer:
-  consumer:
+listener:
+  listener:
     rpc:
       queue:          rpc
       onProcessError: requeue

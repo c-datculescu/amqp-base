@@ -1,7 +1,9 @@
+# defines all listener instances that we will actually use in the code.
+# this uses the listener factory to return the configured listener needed
 services:
   listener.demo:
     class: \Amqp\Util\Listener\Simple
-    factory: ["@listener.builder", listener]
+    factory: ["@listener.factory", listener]
     arguments:
       - "@listener.type.demo"
-      - consumer_test
+      - test

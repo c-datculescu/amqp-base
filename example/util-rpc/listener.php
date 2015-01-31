@@ -26,8 +26,6 @@ $loader = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader($cont
 $loader->load('services.yml');
 $container->setParameter('config_path', __DIR__ . '/config');
 
-$listenerBuilder = $container->get('listener.builder');
-
 $listener = $container->get('listener.demo');
 
 $listener->listen();

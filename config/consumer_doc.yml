@@ -1,7 +1,6 @@
-consumer:
-  consumer:
+listener:
+  listener:
     consumer-test:
-
       # the queue on which we need to listen for incoming messages
       queue:                test-queue
 
