@@ -40,7 +40,7 @@ services:
       - @listener.config.loader
 
   listener.builder:
-    class: \Amqp\Util\Builder\Listener
+    class: \Amqp\Util\Factory\Listener
     arguments:
       - @listener.config.factory
 
