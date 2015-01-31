@@ -21,12 +21,12 @@ amqp:
 
   exchange:
     test:
-      <<:                   *baseExchange
+      <<:                   *baseExchDurable
       name:                 {name: test-exchange, type: constant}
       type:                 AMQP_EX_TYPE_DIRECT
   queue:
     test:
-      <<:                   *baseQueue
+      <<:                   *baseQueueDurable
       name:                 {name: test-queue, type: constant}
       dependencies:
         exchange:

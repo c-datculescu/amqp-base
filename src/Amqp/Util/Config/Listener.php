@@ -5,7 +5,7 @@ use Amqp\Base\Config\Interfaces\NamedConfigInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class Consumer implements ConfigurationInterface, NamedConfigInterface
+class Listener implements ConfigurationInterface, NamedConfigInterface
 {
     /**
      * {@inheritdoc}

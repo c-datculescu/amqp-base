@@ -31,7 +31,7 @@ $configAmqp = $configFactory->getDefinition('rpc', new \Amqp\Base\Config\Amqp())
 // set up the base-non-di builder
 $builder = new Amqp\Base\Builder\Amqp($configAmqp);
 
-$configListeners = $configFactory->getDefinition('rpc', new \Amqp\Util\Config\Consumer());
+$configListeners = $configFactory->getDefinition('rpc', new \Amqp\Util\Config\Listener());
 
 // initialize the listener builder
 $consumerBuilder = new \Amqp\Util\Builder\Listener($configListeners, $builder);

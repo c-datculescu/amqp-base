@@ -2,7 +2,6 @@
 namespace Amqp\Util\Factory;
 
 use Amqp\Base\Config\Processor;
-use Amqp\Util\Config\Consumer;
 use Amqp\Util\Listener\Interfaces\Listener as ListenerInterface;
 
 class Listener
@@ -18,7 +17,7 @@ class Listener
      */
     public function __construct(Processor $processor)
     {
-        $this->listenerConfiguration = $processor->getDefinition(new Consumer());
+        $this->listenerConfiguration = $processor->getDefinition(new \Amqp\Util\Config\Listener());
     }
 
     /**
