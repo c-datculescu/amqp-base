@@ -2,13 +2,17 @@
     "name":         "c-datculescu/amqp-base",
     "description":  "Allows easy declaration and management of complex AMQP configurations",
     "keywords":     ["amqp", "RabbitMQ", "message-bus"],
-    "version":      "0.2.8",
+    "version":      "0.3.0",
     "type":         "library",
     "license":      "MIT",
     "authors": [
         {
             "name": "Cristian Datculescu",
             "email": "cristian.datculescu@gmail.com"
+        },
+        {
+            "name": "Vitaliy Stephanyuk",
+            "email": "..."
         }
     ],
 

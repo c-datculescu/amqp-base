@@ -16,9 +16,8 @@ class Simple implements Publisher
     protected $exchange;
 
 
-    public function __construct(array $configuration, Amqp $builder)
+    public function __construct(Amqp $builder)
     {
-        $this->configuration = $configuration;
         $this->builder = $builder;
     }
 
@@ -38,5 +37,15 @@ class Simple implements Publisher
         $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
 
         return $response;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setConfiguration(array $configuration)
+    {
+        $this->configuration = $configuration;
+
+        return $this;
     }
 }

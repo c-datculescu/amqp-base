@@ -1,0 +1,18 @@
+# defines all the monitors we want to use for the listeners along with their settings
+services:
+  # define monitors
+  monitor.fileChange:
+    class: \Amqp\Util\Monitor\FileChange
+    scope: prototype
+
+  monitor.memory:
+    class: \Amqp\Util\Monitor\Memory
+    calls:
+      - [setLimit, [512M]]
+    scope: prototype
+
+  monitor.messageCounter:
+    class: Amqp\Util\Monitor\MessageCounter
+    calls:
+      - [setLimit, [2000]]
+    scope: prototype

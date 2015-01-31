@@ -106,6 +106,8 @@ amqp:
       bindings:
         -
           # the name of the exchange to bind to
+          # ATTENTION!!! This is the physical name of the exchange we will use for the bind. This is not the exchange
+          # declaration block from the configuration
           exchange:   test
 
           # the routing key used to dispatch the messages from the binded exchange

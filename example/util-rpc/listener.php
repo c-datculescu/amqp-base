@@ -7,6 +7,7 @@ class Processor implements \Amqp\Util\Interfaces\Processor
     public function process(\AMQPEnvelope $message)
     {
         echo 'FOO:' . $message->getBody() . "\n";
+        return "test-response";
     }
 }
 
@@ -16,6 +17,7 @@ class Processor2 extends Processor
     {
         parent::process($message);
         echo 'BAR:' . $message->getBody() . "\n";
+        return "test-response2";
     }
 }
 
@@ -23,6 +25,7 @@ $container = new \Symfony\Component\DependencyInjection\ContainerBuilder();
 $loader = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader($container, new \Symfony\Component\Config\FileLocator(__DIR__ . '/config'));
 $loader->load('services.yml');
 $container->setParameter('config_path', __DIR__ . '/config');
+
 $listener = $container->get('listener.demo');
 
 $listener->listen();

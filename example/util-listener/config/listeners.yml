@@ -1,0 +1,8 @@
+# declares all the configurations for all the listeners that we will use in the application
+listener:
+  listener:
+    test:
+      queue:          test
+      onProcessError: requeue
+      maxRequeue:     3
+      bulkAck:        50

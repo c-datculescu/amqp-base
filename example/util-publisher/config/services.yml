@@ -1,0 +1,39 @@
+imports:
+  # publisher types
+  - { resource: "publisher.type.yml" }
+
+  # publisher instances
+  - { resource: "publisher.instance.yml" }
+
+services:
+  amqp.config.loader:
+    class: \Amqp\Base\Config\YamlConfigLoader
+    arguments:
+      - %config_path%/config.yml
+
+  amqp.config.factory:
+    class: \Amqp\Base\Config\Processor
+    arguments:
+      - @amqp.config.loader
+
+  amqp.builder:
+    class: \Amqp\Base\Builder\Amqp
+    arguments:
+      - @amqp.config.factory
+
+  # general listener configuration
+  publisher.config.loader:
+    class: \Amqp\Base\Config\YamlConfigLoader
+    arguments:
+      - %config_path%/publisher.yml
+
+  publisher.config.factory:
+    class: \Amqp\Base\Config\Processor
+    arguments:
+      - @publisher.config.loader
+
+  publisher.builder:
+    class: \Amqp\Util\Factory\Publisher
+    arguments:
+      - @publisher.config.factory
+

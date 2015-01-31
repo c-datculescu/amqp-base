@@ -24,14 +24,18 @@ amqp:
       <<:                   *baseChannQOS
 
   exchange:
-    test:
+    rpc:
       <<:                   *baseExchDurable
-      name:                 {name: test-exchange, type: constant}
-      type:                 AMQP_EX_TYPE_DIRECT
+      name:                 {name: rpc-exchange, type: constant}
+      type:                 AMQP_EX_TYPE_TOPIC
+    default:
+      <<:                   *baseExchDurable
+      isDefault:            true
   queue:
-    test:
+    rpc:
       <<:                   *baseQueueDurable
-      name:                 {name: test-queue, type: constant}
+      name:                 {name: rpc-queue, type: constant}
       dependencies:
-        exchange:
-          - test
+        exchange:           [rpc]
+      bindings:
+        - {exchange: rpc-exchange, routingKey: "#"}

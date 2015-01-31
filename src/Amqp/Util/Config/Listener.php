@@ -5,7 +5,7 @@ use Amqp\Base\Config\Interfaces\NamedConfigInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class Consumer implements ConfigurationInterface, NamedConfigInterface
+class Listener implements ConfigurationInterface, NamedConfigInterface
 {
     /**
      * {@inheritdoc}
@@ -13,18 +13,14 @@ class Consumer implements ConfigurationInterface, NamedConfigInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('consumer');
+        $rootNode = $treeBuilder->root('listener');
 
         $rootNode
             ->ignoreExtraKeys()
             ->children()
-                ->arrayNode('consumer')
+                ->arrayNode('listener')
                     ->prototype('array')
                         ->children()
-                            ->scalarNode('class')
-                                ->isRequired()
-                                ->cannotBeEmpty()
-                            ->end()
                             ->scalarNode('queue')
                                 ->isRequired()
                                 ->cannotBeEmpty()
@@ -37,19 +33,6 @@ class Consumer implements ConfigurationInterface, NamedConfigInterface
                             ->end()
                             ->integerNode('bulkAck')
                                 ->defaultValue(0)
-                            ->end()
-                            ->arrayNode('watchers')
-                                ->prototype('array')
-                                    ->children()
-                                        ->scalarNode('class')
-                                            ->isRequired()
-                                            ->cannotBeEmpty()
-                                        ->end()
-                                        ->arrayNode('arguments')
-                                            ->prototype('scalar')->end()
-                                        ->end()
-                                    ->end()
-                                ->end()
                             ->end()
                         ->end()
                     ->end()

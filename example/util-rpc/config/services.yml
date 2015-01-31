@@ -1,0 +1,71 @@
+imports:
+  # include all the monitoring services we have defined
+  - { resource: "listener.monitor.yml" }
+
+  # include all the processors we have defined
+  - { resource: "listener.processor.yml" }
+
+  # include all types of listeners we have defined
+  - { resource: "listener.type.yml" }
+
+  # include the listener instances we have defined
+  - { resource: "listener.instance.yml" }
+
+  # include all types of listeners we have defined
+  - { resource: "publisher.type.yml" }
+
+  # include the listener instances we have defined
+  - { resource: "publisher.instance.yml" }
+
+  # include the listener instances we have defined
+  - { resource: "publisher.processor.yml" }
+
+services:
+  # define configurations for base amqp stuff
+  amqp.config.loader:
+    class: \Amqp\Base\Config\YamlConfigLoader
+    arguments:
+      - %config_path%/config.yml
+
+  amqp.config.factory:
+    class: \Amqp\Base\Config\Processor
+    arguments:
+      - @amqp.config.loader
+
+  amqp.builder:
+    class: \Amqp\Base\Builder\Amqp
+    arguments:
+      - @amqp.config.factory
+
+  # general listener configuration
+  listener.config.loader:
+    class: \Amqp\Base\Config\YamlConfigLoader
+    arguments:
+      - %config_path%/listeners.yml
+
+  listener.config.factory:
+    class: \Amqp\Base\Config\Processor
+    arguments:
+      - @listener.config.loader
+
+  listener.factory:
+    class: \Amqp\Util\Factory\Listener
+    arguments:
+      - @listener.config.factory
+
+  # general publisher configuration
+  publisher.config.loader:
+    class: \Amqp\Base\Config\YamlConfigLoader
+    arguments:
+      - %config_path%/publishers.yml
+
+  publisher.config.factory:
+    class: \Amqp\Base\Config\Processor
+    arguments:
+      - @publisher.config.loader
+
+  publisher.factory:
+    class: \Amqp\Util\Factory\Publisher
+    arguments:
+      - @publisher.config.factory
+
