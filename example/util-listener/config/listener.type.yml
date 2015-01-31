@@ -1,0 +1,13 @@
+services:
+  # define all the types of listeners we need to use in the application
+  listener.type.demo:
+    class: \Amqp\Util\Listener\Simple
+    arguments:
+      - @amqp.builder
+    calls:
+      # attach the monitors
+      - [attachMonitor, ["@monitor.memory"]]
+      - [attachMonitor, ["@monitor.fileChange"]]
+      - [attachMonitor, ["@monitor.memory"]]
+      # attach the processor
+      - [setProcessor, ["@processor.test"]]

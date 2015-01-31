@@ -2,20 +2,6 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$loader = new \Amqp\Base\Config\YamlConfigLoader(__DIR__ . '/config/config.yml');
-
-// initialize the configuration factory
-$configFactory = new \Amqp\Base\Config\Processor($loader);
-
-// set up the base-non-di builder
-$builder = new Amqp\Base\Builder\Amqp($configFactory);
-
-$listener = new \Amqp\Util\Listener\Simple(array(
-    'queue'          => 'test',
-    'onProcessError' => 'requeue',
-    'bulkAck'        => '50'
-), $builder);
-
 class Processor implements \Amqp\Util\Interfaces\Processor
 {
     public function process(\AMQPEnvelope $message)
@@ -33,5 +19,13 @@ class Processor2 extends Processor
     }
 }
 
-$listener->setProcessor(new Processor2());
+$container = new \Symfony\Component\DependencyInjection\ContainerBuilder();
+$loader = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader($container, new \Symfony\Component\Config\FileLocator(__DIR__ . '/config'));
+$loader->load('services.yml');
+$container->setParameter('config_path', __DIR__ . '/config');
+
+$listenerBuilder = $container->get('listener.builder');
+
+$listener = $container->get('listener.demo');
+
 $listener->listen();

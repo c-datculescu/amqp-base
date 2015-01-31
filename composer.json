@@ -9,6 +9,10 @@
         {
             "name": "Cristian Datculescu",
             "email": "cristian.datculescu@gmail.com"
+        },
+        {
+            "name": "Vitaliy Stephanyuk",
+            "email": "..."
         }
     ],
 
@@ -18,6 +22,9 @@
 
         "ext-amqp": ">=1.0",
         "ext-libevent": ">=0.1.0"
+    },
+    "require-dev": {
+        "symfony/dependency-injection": "2.6.*"
     },
     "autoload": {
         "psr-0": {

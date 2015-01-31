@@ -43,4 +43,13 @@ interface Listener
      * @return bool When the method returns false, the consuming stops
      */
     public function consume(AMQPEnvelope $message);
+
+    /**
+     * Sets the configuration for the current listener
+     *
+     * @param array $configuration The configuration for the current listener
+     *
+     * @return mixed
+     */
+    public function setConfiguration(array $configuration);
 }

@@ -18,11 +18,6 @@ consumer:
   consumer:
     consumer-test:
 
-      # the type of consumer. Can be one of: simple, rpc, getOne
-      # simple: issues blocking consume and awaits for messages incoming on the queue using amqp's consume method
-      # rpc: issues blocking consume and for every message processed responds to the specified reply_to queue
-      type:                 simple
-
       # the queue on which we need to listen for incoming messages
       queue:                test-queue
 

@@ -1,0 +1,7 @@
+services:
+  listener.demo:
+    class: \Amqp\Util\Listener\Simple
+    factory: ["@listener.builder", listener]
+    arguments:
+      - "@listener.type.demo"
+      - consumer_test

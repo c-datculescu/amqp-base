@@ -1,0 +1,7 @@
+consumer:
+  consumer:
+    consumer-test:
+      queue:          test
+      onProcessError: requeue
+      maxRequeue:     3
+      bulkAck:        50

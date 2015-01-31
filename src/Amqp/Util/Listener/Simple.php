@@ -42,13 +42,21 @@ class Simple implements Listener
     protected $nackCounter = 0;
 
     /**
-     * @param array $configuration The configuration array
      * @param Amqp  $builder       The Amqp builder
      */
-    public function __construct(array $configuration, Amqp $builder)
+    public function __construct(Amqp $builder)
+    {
+        $this->builder = $builder;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setConfiguration(array $configuration)
     {
         $this->configuration = $configuration;
-        $this->builder = $builder;
+
+        return $this;
     }
 
     /**
