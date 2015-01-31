@@ -1,0 +1,14 @@
+services:
+  # define monitors
+  monitor.fileChange:
+    class: \Amqp\Util\Monitor\FileChange
+
+  monitor.memory:
+    class: \Amqp\Util\Monitor\Memory
+    calls:
+      - [setLimit, [512M]]
+
+  monitor.messageCounter:
+    class: Amqp\Util\Monitor\MessageCounter
+    calls:
+      - [setLimit, [2000]]

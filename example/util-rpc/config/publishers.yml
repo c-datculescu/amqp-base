@@ -1,0 +1,4 @@
+publisher:
+  publisher:
+    rpc:
+      exchange: rpc

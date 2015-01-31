@@ -1,0 +1,6 @@
+consumer:
+  consumer:
+    rpc:
+      queue:          rpc
+      onProcessError: requeue
+      bulkAck:        50

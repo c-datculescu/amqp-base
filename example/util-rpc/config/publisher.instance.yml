@@ -1,6 +1,6 @@
 services:
   publisher.demo:
-    class: \Amqp\Util\Publisher\Simple
+    class: \Amqp\Util\Publisher\Rpc
     factory: ["@publisher.builder", publisher]
     arguments:
       - "@publisher.type.demo"

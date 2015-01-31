@@ -1,0 +1,37 @@
+amqp:
+  baseConnection:
+    live: &baseLive {host: [localhost], port:5672, login:guest, password:guest, vhost:/}
+
+  baseChannel:
+    base: &baseChannQOS {count: 100, connection: live}
+
+  baseExchange:
+    base: &baseExchDurable {flags: [AMQP_DURABLE], channel: live}
+
+  baseQueue:
+    base: &baseQueueDurable {flags: [AMQP_DURABLE], channel: live}
+
+  connection:
+    live:
+      <<:                   *baseLive
+
+  channel:
+    live:
+      <<:                   *baseChannQOS
+
+  exchange:
+    rpc:
+      <<:                   *baseExchDurable
+      name:                 {name: rpc-exchange, type: constant}
+      type:                 AMQP_EX_TYPE_TOPIC
+    default:
+      <<:                   *baseExchDurable
+      isDefault:            true
+  queue:
+    rpc:
+      <<:                   *baseQueueDurable
+      name:                 {name: rpc-queue, type: constant}
+      dependencies:
+        exchange:           [rpc]
+      bindings:
+        - {exchange: rpc-exchange, routingKey: "#"}

@@ -1,0 +1,7 @@
+services:
+  listener.demo:
+    class: \Amqp\Util\Listener\Rpc
+    factory: ["@listener.builder", listener]
+    arguments:
+      - "@listener.type.demo"
+      - rpc
