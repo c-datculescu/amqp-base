@@ -2,7 +2,7 @@
     "name":         "c-datculescu/amqp-base",
     "description":  "Allows easy declaration and management of complex AMQP configurations",
     "keywords":     ["amqp", "RabbitMQ", "message-bus"],
-    "version":      "0.2.8",
+    "version":      "0.3.0",
     "type":         "library",
     "license":      "MIT",
     "authors": [
@@ -22,9 +22,6 @@
 
         "ext-amqp": ">=1.0",
         "ext-libevent": ">=0.1.0"
-    },
-    "require-dev": {
-        "symfony/dependency-injection": "2.6.*"
     },
     "autoload": {
         "psr-0": {
