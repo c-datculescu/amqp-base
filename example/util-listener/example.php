@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-class testProcessor implements \Amqp\Util\Interfaces\Processor
+class TestProcessor implements \Amqp\Util\Interfaces\Processor
 {
     public function process(\AMQPEnvelope $message)
     {
@@ -10,7 +10,7 @@ class testProcessor implements \Amqp\Util\Interfaces\Processor
     }
 }
 
-class dateTimeProcessor extends testProcessor
+class TateTimeProcessor extends testProcessor
 {
     public function process(\AMQPEnvelope $message)
     {
