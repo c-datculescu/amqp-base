@@ -1,5 +1,5 @@
 services:
-  exchange.test:
+  exchange.testExchange:
     factory: ["@amqp.builder.factory", exchange]
     arguments:
-      - test
+      - testExchange

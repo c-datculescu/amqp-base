@@ -1,28 +1,31 @@
 <?php
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../../../autoload.php';
 
-class Processor implements \Amqp\Util\Interfaces\Processor
+class testProcessor implements \Amqp\Util\Interfaces\Processor
 {
     public function process(\AMQPEnvelope $message)
     {
-        echo 'FOO:' . $message->getBody() . "\n";
+        echo 'Test message is: ' . $message->getBody() . PHP_EOL;
     }
 }
 
-class Processor2 extends Processor
+class dateTimeProcessor extends testProcessor
 {
     public function process(\AMQPEnvelope $message)
     {
-        parent::process($message);
-        echo 'BAR:' . $message->getBody() . "\n";
+        echo 'Date time is: ' . $message->getBody() . PHP_EOL;
     }
 }
 
-$container = new \Symfony\Component\DependencyInjection\ContainerBuilder();
-$loader = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader($container, new \Symfony\Component\Config\FileLocator(__DIR__ . '/config'));
+$container   = new \Symfony\Component\DependencyInjection\ContainerBuilder();
+$fileLocator = new \Symfony\Component\Config\FileLocator(__DIR__ . '/config');
+$loader      = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader($container, $fileLocator);
+
 $loader->load('services.yml');
 $container->setParameter('config_path', __DIR__ . '/config');
-$listener = $container->get('listener.demo');
+
+$listener = $container->get('listener.test');
+//$listener = $container->get('listener.dateTime');
 
 $listener->listen();

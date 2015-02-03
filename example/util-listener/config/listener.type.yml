@@ -1,10 +1,10 @@
 # configures the actual listeners we will need to use in the application, attaching the monitors and the processors
 # so that we can get a fully configured instance from the factory
 services:
-  listener.type.demo:
+  listener.type.test:
     class: \Amqp\Util\Listener\Simple
     arguments:
-      - @queue.test
+      - @queue.testQueue
     calls:
       # attach the monitors
       - [attachMonitor, ["@monitor.memory"]]
@@ -12,3 +12,14 @@ services:
       - [attachMonitor, ["@monitor.memory"]]
       # attach the processor
       - [setProcessor, ["@processor.test"]]
+  listener.type.dateTime:
+    class: \Amqp\Util\Listener\Simple
+    arguments:
+      - @queue.dateTimeQueue
+    calls:
+      # attach the monitors
+      - [attachMonitor, ["@monitor.memory"]]
+      - [attachMonitor, ["@monitor.fileChange"]]
+      - [attachMonitor, ["@monitor.memory"]]
+      # attach the processor
+      - [setProcessor, ["@processor.dateTime"]]

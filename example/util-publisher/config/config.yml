@@ -24,14 +24,21 @@ amqp:
       <<:                   *baseChannQOS
 
   exchange:
-    test:
+    testExchange:
       <<:                   *baseExchDurable
       name:                 {name: test-exchange, type: constant}
-      type:                 AMQP_EX_TYPE_DIRECT
+      type:                 AMQP_EX_TYPE_TOPIC
+
   queue:
-    test:
+    testQueue:
       <<:                   *baseQueueDurable
       name:                 {name: test-queue, type: constant}
       dependencies:
         exchange:
-          - test
+          - testExchange
+    dateTimeQueue:
+      <<:                   *baseQueueDurable
+      name:                 {name: date-queue, type: constant}
+      dependencies:
+        exchange:
+          - testExchange
