@@ -1,9 +1,15 @@
 # defines all listener instances that we will actually use in the code.
 # this uses the listener factory to return the configured listener needed
 services:
-  listener.demo:
+  listener.test:
     class: \Amqp\Util\Listener\Simple
     factory: ["@listener.factory", listener]
     arguments:
-      - "@listener.type.demo"
-      - test
+      - "@listener.type.test"
+      - testQueue
+  listener.dateTime:
+    class: \Amqp\Util\Listener\Simple
+    factory: ["@listener.factory", listener]
+    arguments:
+      - "@listener.type.dateTime"
+      - dateTimeQueue

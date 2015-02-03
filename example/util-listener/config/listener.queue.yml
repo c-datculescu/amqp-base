@@ -1,5 +1,9 @@
 services:
-  queue.test:
+  queue.testQueue:
     factory: ["@amqp.builder.factory", queue]
     arguments:
-      - test
+      - testQueue
+  queue.dateTimeQueue:
+      factory: ["@amqp.builder.factory", queue]
+      arguments:
+        - dateTimeQueue

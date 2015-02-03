@@ -1,4 +1,4 @@
 # defines all the publisher configurations we will use in the application
 publisher:
   publisher:
-    test:
+    testPublisher:
