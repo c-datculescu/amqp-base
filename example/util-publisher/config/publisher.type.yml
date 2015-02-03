@@ -3,4 +3,4 @@ services:
   publisher.type.demo:
     class: \Amqp\Util\Publisher\Simple
     arguments:
-      - @amqp.builder
+      - @exchange.test

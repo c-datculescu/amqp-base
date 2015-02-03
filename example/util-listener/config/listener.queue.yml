@@ -1,0 +1,5 @@
+services:
+  queue.test:
+    factory: ["@amqp.builder.factory", queue]
+    arguments:
+      - test

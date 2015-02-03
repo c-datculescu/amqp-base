@@ -20,6 +20,12 @@ imports:
   # include the listener instances we have defined
   - { resource: "publisher.processor.yml" }
 
+  # all the exchanges
+  - { resource: "publisher.exchange.yml" }
+
+  # all the queues
+  - { resource: "listener.queue.yml" }
+
 services:
   # define configurations for base amqp stuff
   amqp.config.loader:
@@ -32,7 +38,7 @@ services:
     arguments:
       - @amqp.config.loader
 
-  amqp.builder:
+  amqp.builder.factory:
     class: \Amqp\Base\Builder\Amqp
     arguments:
       - @amqp.config.factory

@@ -2,18 +2,12 @@
 namespace Amqp\Util\Publisher;
 
 use Amqp\Util\Interfaces\TimeoutProcessor;
-use Amqp\Base\Builder\Interfaces\Amqp;
 use \AMQPExchange,
     \AMQPQueue,
     \AMQPEnvelope;
 
 class Rpc implements Interfaces\Rpc
 {
-    /**
-     * @var Amqp
-     */
-    protected $builder;
-
     /**
      * @var array
      */
@@ -53,9 +47,9 @@ class Rpc implements Interfaces\Rpc
      */
     protected $replyQueue;
 
-    public function __construct(Amqp $builder)
+    public function __construct(AMQPExchange $exchange)
     {
-        $this->builder = $builder;
+        $this->exchange = $exchange;
     }
 
     /**
@@ -63,13 +57,6 @@ class Rpc implements Interfaces\Rpc
      */
     public function publish($message, $routingKey = '', array $properties = array())
     {
-        if (!isset($this->configuration['exchange'])) {
-            throw new Exception('No exchange declared for the current publisher!');
-        }
-
-        $exchange = $this->builder->exchange($this->configuration['exchange']);
-        $this->exchange = $exchange;
-
         $this->replyQueue = $this->declareAnonQueue();
 
         // retrieve the queue name

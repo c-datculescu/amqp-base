@@ -2,7 +2,6 @@
 listener:
   listener:
     test:
-      queue:          test
       onProcessError: requeue
       maxRequeue:     3
       bulkAck:        50

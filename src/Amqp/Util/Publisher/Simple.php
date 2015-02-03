@@ -16,9 +16,9 @@ class Simple implements Publisher
     protected $exchange;
 
 
-    public function __construct(Amqp $builder)
+    public function __construct(\AMQPExchange $exchange)
     {
-        $this->builder = $builder;
+        $this->exchange = $exchange;
     }
 
     /**
@@ -26,10 +26,6 @@ class Simple implements Publisher
      */
     public function publish($message, $routingKey = '', array $properties = array())
     {
-        $exchange = $this->builder->exchange($this->configuration['exchange']);
-
-        $this->exchange = $exchange;
-
         if (!isset($properties['timestamp'])) {
             $properties['timestamp'] = microtime(true);
         }

@@ -3,7 +3,6 @@ namespace Amqp\Util\Listener;
 
 use Amqp\Util\Monitor\Interfaces\Monitor;
 use Amqp\Util\Listener\Interfaces\Listener;
-use Amqp\Base\Builder\Interfaces\Amqp;
 use Amqp\Util\Interfaces\Processor;
 
 use \AMQPQueue,
@@ -15,11 +14,6 @@ class Simple implements Listener
      * @var array
      */
     protected $configuration = array();
-
-    /**
-     * @var Amqp
-     */
-    protected $builder;
 
     /**
      * @var Processor
@@ -42,11 +36,11 @@ class Simple implements Listener
     protected $nackCounter = 0;
 
     /**
-     * @param Amqp  $builder       The Amqp builder
+     * @param AMQPQueue $queue The queue on which the listener should operate
      */
-    public function __construct(Amqp $builder)
+    public function __construct(AMQPQueue $queue)
     {
-        $this->builder = $builder;
+        $this->queue = $queue;
     }
 
     /**
@@ -64,12 +58,6 @@ class Simple implements Listener
      */
     public function listen()
     {
-        if (!isset($this->configuration['queue'])) {
-            throw new Exception("No queue defined for listening on!");
-        }
-
-        $this->queue = $this->builder->queue($this->configuration['queue']);
-
         // start listening on the queue
         $this->queue->consume(array($this, 'consume'));
     }

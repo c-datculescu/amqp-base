@@ -4,7 +4,7 @@ services:
   listener.type.demo:
     class: \Amqp\Util\Listener\Simple
     arguments:
-      - @amqp.builder
+      - @queue.test
     calls:
       # attach the monitors
       - [attachMonitor, ["@monitor.memory"]]

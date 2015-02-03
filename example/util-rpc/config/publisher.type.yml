@@ -3,6 +3,6 @@ services:
   publisher.type.demo:
     class: \Amqp\Util\Publisher\Rpc
     arguments:
-      - @amqp.builder
+      - @exchange.test
     calls:
       - [attach, ["@processor.rpc"]]
