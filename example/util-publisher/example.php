@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../../../autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $container   = new \Symfony\Component\DependencyInjection\ContainerBuilder();
 $fileLocator = new \Symfony\Component\Config\FileLocator(__DIR__ . '/config');
