@@ -2,9 +2,6 @@ imports:
   # publisher types
   - { resource: "publisher.type.yml" }
 
-  # publisher instances
-  - { resource: "publisher.instance.yml" }
-
   # exchanges available
   - { resource: "publisher.exchange.yml" }
 

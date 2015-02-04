@@ -1,7 +1,0 @@
-services:
-  publisher.demo:
-    class: \Amqp\Util\Publisher\Rpc
-    factory: ["@publisher.factory", publisher]
-    arguments:
-      - "@publisher.type.demo"
-      - rpc
