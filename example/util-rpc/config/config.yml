@@ -4,7 +4,7 @@
 # for more informations please look at config/config_doc.yml, all configuration values are present there
 amqp:
   baseConnection:
-    live: &baseLive {host: [localhost], port:5672, login:guest, password:guest, vhost:/}
+    live: &baseLive {host: [localhost], port:5672, login:test, password:test, vhost:/}
 
   baseChannel:
     base: &baseChannQOS {count: 100, connection: live}

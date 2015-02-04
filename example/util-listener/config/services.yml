@@ -9,9 +9,6 @@ imports:
   # include all types of listeners we have defined
   - { resource: "listener.type.yml" }
 
-  # include the listener instances we have defined
-  - { resource: "listener.instance.yml" }
-
   # define all the queues available for the application
   - { resource: "listener.queue.yml" }
 

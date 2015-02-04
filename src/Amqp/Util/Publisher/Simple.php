@@ -15,10 +15,22 @@ class Simple implements Publisher
      */
     protected $exchange;
 
-
-    public function __construct(\AMQPExchange $exchange)
+    /**
+     * {@inheritdoc}
+     */
+    public function setExchange(\AMQPExchange $exchange)
     {
         $this->exchange = $exchange;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setConfiguration(array $configuration)
+    {
+        $this->configuration = $configuration;
     }
 
     /**
@@ -33,15 +45,5 @@ class Simple implements Publisher
         $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
 
         return $response;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setConfiguration(array $configuration)
-    {
-        $this->configuration = $configuration;
-
-        return $this;
     }
 }

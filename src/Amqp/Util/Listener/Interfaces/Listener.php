@@ -52,4 +52,13 @@ interface Listener
      * @return mixed
      */
     public function setConfiguration(array $configuration);
+
+    /**
+     * Sets the queue
+     *
+     * @param \AMQPQueue $queue The queue to listen to
+     *
+     * @return $this
+     */
+    public function setQueue(\AMQPQueue $queue);
 }

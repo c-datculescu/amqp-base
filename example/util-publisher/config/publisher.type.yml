@@ -1,6 +1,11 @@
+parameters:
+  publisher.test:
+    timeout: 100000
+
 # define all the types of publishers we need to use in the application
 services:
-  publisher.type.demo:
+  publisher.demo:
     class: \Amqp\Util\Publisher\Simple
-    arguments:
-      - @exchange.testExchange
+    calls:
+      - [setExchange, [@exchange.testExchange]]
+      - [setConfiguration, [%publisher.test%]]
