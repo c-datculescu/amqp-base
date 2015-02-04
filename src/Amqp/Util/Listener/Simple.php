@@ -36,19 +36,21 @@ class Simple implements Listener
     protected $nackCounter = 0;
 
     /**
-     * @param AMQPQueue $queue The queue on which the listener should operate
-     */
-    public function __construct(AMQPQueue $queue)
-    {
-        $this->queue = $queue;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function setConfiguration(array $configuration)
     {
         $this->configuration = $configuration;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setQueue(\AMQPQueue $queue)
+    {
+        $this->queue = $queue;
 
         return $this;
     }

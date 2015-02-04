@@ -8,14 +8,8 @@ imports:
   # include all types of listeners we have defined
   - { resource: "listener.type.yml" }
 
-  # include the listener instances we have defined
-  - { resource: "listener.instance.yml" }
-
   # include all types of listeners we have defined
   - { resource: "publisher.type.yml" }
-
-  # include the listener instances we have defined
-  - { resource: "publisher.instance.yml" }
 
   # include the listener instances we have defined
   - { resource: "publisher.processor.yml" }

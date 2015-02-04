@@ -47,11 +47,6 @@ class Rpc implements Interfaces\Rpc
      */
     protected $replyQueue;
 
-    public function __construct(AMQPExchange $exchange)
-    {
-        $this->exchange = $exchange;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -213,6 +208,16 @@ class Rpc implements Interfaces\Rpc
     public function setConfiguration(array $configuration)
     {
         $this->configuration = $configuration;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setExchange(\AMQPExchange $exchange)
+    {
+        $this->exchange = $exchange;
 
         return $this;
     }

@@ -38,4 +38,13 @@ interface Publisher
      * @return $this
      */
     public function setConfiguration(array $configuration);
+
+    /**
+     * Sets the current exchange to publish to
+     *
+     * @param \AMQPExchange $exchange Exchange
+     *
+     * @return mixed
+     */
+    public function setExchange(\AMQPExchange $exchange);
 }

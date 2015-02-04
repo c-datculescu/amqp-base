@@ -1,8 +1,12 @@
+parameters:
+  publisher.test:
+    timeout: 100000
+
 services:
   # define all the types of publishers we need to use in the application
-  publisher.type.demo:
+  publisher.demo:
     class: \Amqp\Util\Publisher\Rpc
-    arguments:
-      - @exchange.test
     calls:
       - [attach, ["@processor.rpc"]]
+      - [setExchange, [@exchange.test]]
+      - [setConfiguration, [%publisher.test%]]

@@ -1,9 +1,13 @@
+parameters:
+  listener.test:
+    onProcessError: requeue
+    maxRequeue: 3
+    bulkAck: 0
+
 services:
   # define all the types of listeners we need to use in the application
-  listener.type.demo:
+  listener.demo:
     class: \Amqp\Util\Listener\Rpc
-    arguments:
-      - @queue.test
     calls:
       # attach the monitors
       - [attachMonitor, ["@monitor.memory"]]
@@ -11,3 +15,7 @@ services:
       - [attachMonitor, ["@monitor.memory"]]
       # attach the processor
       - [setProcessor, ["@processor.test"]]
+      # queue
+      - [setQueue, [@queue.test]]
+      # config
+      - [setConfiguration, [%listener.test%]]
