@@ -1,5 +1,0 @@
-listener:
-  listener:
-    rpc:
-      onProcessError: requeue
-      bulkAck:        50

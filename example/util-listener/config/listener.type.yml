@@ -1,6 +1,8 @@
 parameters:
   listener.test:
-    onProcessError: requeue
+    onProcessError:
+      err_bad_request: continue
+
     maxRequeue: 3
     bulkAck: 0
 

@@ -6,7 +6,7 @@ class TestProcessor implements \Amqp\Util\Interfaces\Processor
 {
     public function process(\AMQPEnvelope $message)
     {
-        echo 'Test message is: ' . $message->getBody() . PHP_EOL;
+        return \Amqp\Util\Interfaces\Processor::ERR_BAD_REQUEST;
     }
 }
 

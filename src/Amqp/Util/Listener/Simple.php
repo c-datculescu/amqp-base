@@ -87,7 +87,6 @@ class Simple implements Listener
      */
     public function consume(AMQPEnvelope $message)
     {
-        $stopOnError = $this->configuration['onProcessError'];
         $bulkAck = $this->configuration['bulkAck'];
 
         $stopListener = false;
@@ -99,38 +98,11 @@ class Simple implements Listener
 
         // message received, notify all the processors about it
         $result = $this->processor->process($message);
-        if ($result === false && $stopOnError != 'continue') {
-            switch ($stopOnError) {
-                case 'requeue':
-                    // nack the message and requeue it
-                    // @TODO check how to deal with successive requeues until we hit the limit imposed
-                    $this->queue->nack($message->getDeliveryTag(), AMQP_REQUEUE);
-                    break;
-                case 'error':
-                    // nack the message, most likely should go to an error queue
-                    if ($bulkAck != 0) {
-                        $this->queue->nack($message->getDeliveryTag(), AMQP_MULTIPLE);
-                        $this->nackCounter = 0;
-                    } else {
-                        $this->queue->nack($message->getDeliveryTag());
-                    }
 
-                    break;
-                case 'stop':
-                    // ack the message
-                    if ($bulkAck != 0) {
-                        $this->queue->ack($message->getDeliveryTag(), AMQP_MULTIPLE);
-                        $this->nackCounter = 0;
-                    } else {
-                        $this->queue->ack($message->getDeliveryTag());
-                    }
-                    $stopListener = true;
-                    break;
-            }
-
+        if ($result !== Processor::OK) {
+            $this->processError($message, $result);
             $isProcessed = true;
         }
-
 
         if ($isProcessed === false) {
             if ($bulkAck != 0 && $this->nackCounter === $bulkAck) {
@@ -157,5 +129,70 @@ class Simple implements Listener
         }
 
         return true;
+    }
+
+    /**
+     * Implements all the needed behaviors for processing messages in case of errors
+     * This method will nack all the provious messages or ack all the previous messages in the case of a failed message
+     * The results can be surprising.
+     *
+     * @param AMQPEnvelope $message The message to be processed
+     * @param bool|int     $result  The reply from the processor
+     *
+     * @return void
+     */
+    protected function processError(\AMQPEnvelope $message, $result)
+    {
+        if (isset($this->configuration['onProcessError'])) {
+            $stopOnError = $this->configuration['onProcessError'];
+
+            // set up a sensible default
+            $action = 'error';
+
+            switch ($result) {
+                case Processor::CRIT_INTERNAL_SERVER_ERROR:
+                    if (isset($stopOnError['crit_internal_server_error'])) {
+                        $action = $stopOnError['crit_internal_server_error'];
+                    }
+                    break;
+                case Processor::CRIT_NOT_IMPLEMENTED:
+                    if (isset($stopOnError['crit_not_implemented'])) {
+                        $action = $stopOnError['crit_not_implemented'];
+                    }
+                    break;
+                case Processor::ERR_BAD_REQUEST:
+                    if (isset($stopOnError['err_bad_request'])) {
+                        $action = $stopOnError['err_bad_request'];
+                    }
+                    break;
+                case Processor::ERR_NOT_FOUND:
+                    if (isset($stopOnError['err_not_found'])) {
+                        $action = $stopOnError['err_not_found'];
+                    }
+                    break;
+            }
+
+            switch ($action) {
+                case 'error':
+                    $this->queue->nack($message->getDeliveryTag(), AMQP_MULTIPLE);
+                    $this->nackCounter = 0;
+                    break;
+                case 'requeue':
+                    $this->queue->nack($message->getDeliveryTag(), AMQP_REQUEUE | AMQP_MULTIPLE);
+                    $this->nackCounter = 0;
+                    break;
+                case 'stop':
+                    $this->queue->nack($message->getDeliveryTag(), AMQP_MULTIPLE);
+                    exit(1);
+                case 'continue':
+                    $this->queue->ack($message->getDeliveryTag(), AMQP_MULTIPLE);
+                    // reset the nack counter
+                    $this->nackCounter = 0;
+                    break;
+            }
+
+        } else {
+            $this->queue->nack($message->getDeliveryTag());
+        }
     }
 }

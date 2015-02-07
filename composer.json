@@ -2,7 +2,7 @@
     "name":         "c-datculescu/amqp-base",
     "description":  "Allows easy declaration and management of complex AMQP configurations",
     "keywords":     ["amqp", "RabbitMQ", "message-bus"],
-    "version":      "0.3.4",
+    "version":      "0.3.5",
     "type":         "library",
     "license":      "MIT",
     "authors": [
