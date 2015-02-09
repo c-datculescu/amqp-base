@@ -271,7 +271,7 @@ class Amqp implements Interfaces\Amqp
                 } else {
                     $arguments = array();
                 }
-                $exchange->bind($binding['exchange'], $binding['routingKey'], $arguments);
+                $exchange->bind($binding['exchange'], $binding['routingKey'], AMQP_NOPARAM);
             }
         }
 
