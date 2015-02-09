@@ -262,6 +262,19 @@ class Amqp implements Interfaces\Amqp
 
         $this->exchanges[$exchangeName] = $exchange;
 
+        // get the bindings and apply them
+        if (isset($configuration['bindings'])) {
+            $bindings = $configuration['bindings'];
+            foreach ($bindings as $binding) {
+                if (isset($binding['arguments'])) {
+                    $arguments = $binding['arguments'];
+                } else {
+                    $arguments = array();
+                }
+                $exchange->bind($binding['exchange'], $binding['routingKey'], $arguments);
+            }
+        }
+
         if (isset($this->cyclicLoggers['exchanges'][$exchangeName])) {
             $this->cyclicLoggers['exchanges'][$exchangeName]--;
         }
