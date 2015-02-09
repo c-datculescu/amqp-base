@@ -266,12 +266,7 @@ class Amqp implements Interfaces\Amqp
         if (isset($configuration['bindings'])) {
             $bindings = $configuration['bindings'];
             foreach ($bindings as $binding) {
-                if (isset($binding['arguments'])) {
-                    $arguments = $binding['arguments'];
-                } else {
-                    $arguments = array();
-                }
-                $exchange->bind($binding['exchange'], $binding['routingKey'], AMQP_NOPARAM);
+                $exchange->bind($binding['exchange'], $binding['routingKey']);
             }
         }
 
