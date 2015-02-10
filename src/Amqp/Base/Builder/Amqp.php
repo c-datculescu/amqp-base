@@ -416,16 +416,17 @@ class Amqp implements Interfaces\Amqp
      */
     protected function initDependencies(array $dependencies)
     {
+        if (isset($dependencies['exchange'])) {
+            foreach ($dependencies['exchange'] as $exchange) {
+                $this->exchange($exchange);
+            }
+        }
+
         if (isset($dependencies['queue'])) {
             foreach ($dependencies['queue'] as $queue) {
                 $this->queue($queue);
             }
         }
 
-        if (isset($dependencies['exchange'])) {
-            foreach ($dependencies['exchange'] as $exchange) {
-                $this->exchange($exchange);
-            }
-        }
     }
 }
