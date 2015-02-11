@@ -99,7 +99,7 @@ class Simple implements Listener
         // message received, notify all the processors about it
         $result = $this->processor->process($message);
 
-        if ($result !== Processor::OK) {
+        if ($result !== Processor::OK && $result !== true) {
             $this->processError($message, $result);
             $isProcessed = true;
         }
