@@ -62,6 +62,7 @@ class FileChange implements Monitor
             throw new Exception("Cannot load control file for checking changes!");
         }
 
+        clearstatcache('', $this->filePath);
         $modifiedTime = filemtime($this->filePath);
 
         return $modifiedTime;
