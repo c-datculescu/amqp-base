@@ -168,7 +168,11 @@ class Amqp implements Interfaces\Amqp
 
         $queue = new AMQPQueue($this->channel($configuration['channel']));
 
-        $queue->setName($this->getName($configuration['name']));
+        // set the name only if we have the name defined. Otherwise obtain a dynamicly named queue
+        if ($configuration['name'] !== '') {
+            $queue->setName($this->getName($configuration['name']));
+        }
+
         $queue->setFlags($this->buildBitmask($configuration['flags']));
         if (isset($configuration['arguments'])) {
             $queue->setArguments($this->getQueueProperties($configuration['arguments']));
