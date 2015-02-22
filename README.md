@@ -1,13 +1,35 @@
 # amqp-base
 
-A small php library that allows fast and easy development of applications interacting with AMQP based brokers.
+Small library that can be used with any AMQP 0.9.1 compatible broker.
 
-This library is tested mainly with RabbitMQ, but should work fine with other AMQP brokers like ActiveMQ.
+Currently the library offers access to low-level components like:
 
-Currently it supports all the extensions over the AMQP protocol provided by RabbitMQ:
- - dead-lettering
- - alternate-exchanges
- - queue/message ttl
- - queue max size
+    * connections
+    * channels
+    * queues
+    * exchanges
+ 
+Also the library offers support for higher-level components like consumers and publishers.
+ 
+All the components can be configured via an extensible st of configuration directives, which can also serve as a 
+description for an entire set of architectures.
 
-Examples are provided using symfony DI for basic listeners, basic publishers and rpc. Any complex topologies can be implemented on top of the current library without problems.
+The library currently implements support for most of the RabbitMQ extensions like:
+
+    * dead-lettering
+    * ttl
+    * length and size of queues
+    * alternate-exchanges
+    * exchange to exchange bindings
+    
+The configuration examples can be located in /example directory as well as in the config directory.
+
+The library offers support for dependencies as well as cyclic dependency detection so it is possible to define entire
+infrastructures using the dependency system.
+
+For more examples please check the **examples** directory.
+
+## Todo
+
+    * implement support for high availability options
+    * implement support for multiple configuration files merge
