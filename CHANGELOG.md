@@ -1,5 +1,12 @@
 # AMQP Base
 
+v0.3.16 - 2015-02-22
+
+    * Fixed bug with rpc consumer
+    * Added require-dev
+    * Fixed the examples to run on localhost with default users/passwords
+    * Changed examples adding better defaults
+
 v0.3.15 - 2015-02-22
 
     * Added support for empty queue names

@@ -123,11 +123,11 @@ class Rpc implements Interfaces\Rpc
         while ($this->waitingForAnswer) {
 
             // check if a timeout is defined
-            if (isset($this->configuration['timeout']['timeout'])) {
+            if (isset($this->configuration['timeout'])) {
                 // do we need to stop listening?
                 $difference = time() - $this->startTime;
 
-                if ($difference > $this->configuration['timeout']['timeout']) {
+                if ($difference > $this->configuration['timeout']) {
                     $this->timeout();
                     return $receivedMessage;
                 }

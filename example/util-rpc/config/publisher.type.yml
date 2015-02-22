@@ -1,6 +1,6 @@
 parameters:
   publisher.test:
-    timeout: 100000
+    timeout: 2
 
 services:
   # define all the types of publishers we need to use in the application
