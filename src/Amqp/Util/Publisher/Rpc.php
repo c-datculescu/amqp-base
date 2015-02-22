@@ -19,23 +19,11 @@ class Rpc implements Interfaces\Rpc
     protected $exchange;
 
     /**
-     * The timeout base-non-di
-     * @var resource
-     */
-    protected $timeoutBase;
-
-    /**
-     * List of current events attached to the current base-non-di
-     * @var resource[]
-     */
-    protected $timeoutEvents = array();
-
-    /**
-     * The list of processors for the current rpc implementation
+     * The processor responsible for the current operation
      *
-     * @var \Amqp\Util\Interfaces\TimeoutProcessor[]
+     * @var \Amqp\Util\Interfaces\TimeoutProcessor
      */
-    protected $processors = array();
+    protected $processor;
 
     /**
      * @var bool
@@ -46,6 +34,12 @@ class Rpc implements Interfaces\Rpc
      * @var AMQPQueue
      */
     protected $replyQueue;
+
+    /**
+     * When did the operation begin
+     * @var int
+     */
+    protected $startTime = 0;
 
     /**
      * {@inheritdoc}
@@ -70,13 +64,15 @@ class Rpc implements Interfaces\Rpc
 
         // loop
         if (isset($this->configuration['timeout'])) {
-            $this->initTimeout();
+            $this->startTime = time();
         }
 
         $this->waitingForAnswer = true;
         $message = $this->getMessage($this->replyQueue);
 
-        $this->notify($message);
+        if ($message instanceof AMQPEnvelope) {
+            $this->notify($message);
+        }
     }
 
     /**
@@ -85,9 +81,7 @@ class Rpc implements Interfaces\Rpc
      */
     public function timeout()
     {
-        foreach ($this->processors as $processor) {
-            $processor->timeout();
-        }
+        $this->processor->timeout();
 
         $this->waitingForAnswer = false;
     }
@@ -101,7 +95,7 @@ class Rpc implements Interfaces\Rpc
      */
     public function attach(TimeoutProcessor $processor)
     {
-        $this->processors[] = $processor;
+        $this->processor = $processor;
         return true;
     }
 
@@ -113,67 +107,32 @@ class Rpc implements Interfaces\Rpc
      */
     protected function notify(\AMQPEnvelope $message)
     {
-        foreach ($this->processors as $processor) {
-            $processor->process($message);
-        }
+        $this->processor->process($message);
     }
 
     /**
-     * Initialize the timeout for the current listener.
-     * When the event gets triggered, the method `timeout` from the current instance gets called
+     * Attempts to consume a message from the reply queue
      *
-     * @return bool
-     */
-    protected function initTimeout()
-    {
-        if (!isset($this->configuration['timeout']['timeout'])) {
-            return false;
-        }
-
-        // use libevent to trigger the timeout
-        $base = event_base_new();
-        $event = event_new();
-
-        // call timeout method on current object
-        event_set($event, 0, EV_TIMEOUT, array($this, 'timeout'));
-        event_base_set($event, $base);
-
-        event_add($event, $this->configuration['timeout']['timeout']);
-        event_base_loop($base);
-
-        return true;
-    }
-
-    /**
-     * Cancels all the events and the base-non-di for the events in case we received a message before the events get called
+     * @param AMQPQueue $queue The reply queue
      *
-     * @return bool
-     */
-    protected function disableTimeout()
-    {
-        foreach ($this->timeoutEvents as $place => $event) {
-            event_del($event);
-            unset($this->timeoutEvents[$place]);
-        }
-
-        // cancel the base-non-di as well
-        if (!is_null($this->timeoutBase)) {
-            event_base_free($this->timeoutBase);
-            $this->timeoutBase = null;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param $queue
-     *
-     * @return mixed
+     * @return bool|AMQPEnvelope
      */
     protected function getMessage(AMQPQueue $queue)
     {
         $receivedMessage = false;
         while ($this->waitingForAnswer) {
+
+            // check if a timeout is defined
+            if (isset($this->configuration['timeout']['timeout'])) {
+                // do we need to stop listening?
+                $difference = time() - $this->startTime;
+
+                if ($difference > $this->configuration['timeout']['timeout']) {
+                    $this->timeout();
+                    return $receivedMessage;
+                }
+            }
+
             $receivedMessage = $queue->get();
             if ($receivedMessage == false) {
                 continue;
@@ -181,8 +140,6 @@ class Rpc implements Interfaces\Rpc
                 break;
             }
         }
-
-        $this->disableTimeout();
 
         return $receivedMessage;
     }
