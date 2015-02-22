@@ -22,7 +22,8 @@ listener:
         # the processing reached application level, but something happened in there (for example a failed mysql)
         crit_internal_server_error: error
 
-        # the message reached the application layer, but the application is unable to process the message
+        # the message reached the application layer, but the application does not have the capability of processing the
+        # message. Generally this means that the configuration is not done right
         crit_not_implemented:       error
 
       # if on processing we get an error, how many times we will requeue the message before not requeing it anymore

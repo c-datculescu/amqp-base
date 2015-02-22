@@ -185,12 +185,12 @@ class Simple implements Listener
                     $this->queue->nack($message->getDeliveryTag(), AMQP_MULTIPLE);
                     exit(1);
                 case 'continue':
+                default:
                     $this->queue->ack($message->getDeliveryTag(), AMQP_MULTIPLE);
                     // reset the nack counter
                     $this->nackCounter = 0;
                     break;
             }
-
         } else {
             $this->queue->nack($message->getDeliveryTag());
         }
