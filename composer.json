@@ -20,7 +20,7 @@
         "symfony/yaml": "2.6.*",
         "symfony/config": "2.6.*",
 
-        "ext-amqp": ">=1.0"
+        "ext-amqp": ">=1.4.0"
     },
     "autoload": {
         "psr-0": {
