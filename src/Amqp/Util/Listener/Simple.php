@@ -105,7 +105,7 @@ class Simple implements Listener
         }
 
         if ($isProcessed === false) {
-            if ($bulkAck != 0 && $this->nackCounter === $bulkAck) {
+            if ($bulkAck != 0 && $this->nackCounter >= $bulkAck) {
                 $this->queue->ack($message->getDeliveryTag(), AMQP_MULTIPLE);
                 $this->nackCounter = 0;
             } else if ($bulkAck == 0) {
