@@ -21,7 +21,8 @@
         "symfony/config": "2.6.*"
     },
     "require-dev": {
-        "symfony/dependency-injection": "2.6.*"
+        "symfony/dependency-injection": "2.6.*",
+        "phpunit/phpunit": "4.6.*"
     },
     "autoload": {
         "psr-0": {

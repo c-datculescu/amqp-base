@@ -31,7 +31,7 @@ class MessageCounter implements LimitMonitor
         // we just received another message, increase the internal counter
         $this->counter++;
 
-        if ($this->counter >= $this->limit) {
+        if ($this->counter > $this->limit) {
             return false;
         }
 
