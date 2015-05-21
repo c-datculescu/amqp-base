@@ -2,10 +2,6 @@
 
 namespace Test\Amqp\Base\Config\Loader;
 
-use Amqp\Base\Config\Loader\YamlFileLoader;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\Yaml\Yaml;
-
 class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
     /**
