@@ -5,6 +5,7 @@ parameters:
 
     maxRequeue: 3
     bulkAck: 0
+    tag: test-tag
 
 # configures the actual listeners we will need to use in the application, attaching the monitors and the processors
 # so that we can get a fully configured instance from the factory
