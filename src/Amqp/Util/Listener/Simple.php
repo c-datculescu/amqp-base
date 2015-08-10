@@ -60,8 +60,14 @@ class Simple implements Listener
      */
     public function listen()
     {
+        $tag = null;
+
+        if (isset($this->configuration['tag']) && !empty($this->configuration['tag'])) {
+            $tag = uniqid($this->configuration['tag'] . '-', true);
+        }
+
         // start listening on the queue
-        $this->queue->consume(array($this, 'consume'));
+        $this->queue->consume(array($this, 'consume'), AMQP_NOPARAM, $tag);
     }
 
     /**
