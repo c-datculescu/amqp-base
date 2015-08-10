@@ -79,6 +79,7 @@ class Amqp implements Interfaces\Amqp
         // this option needs to be passed to constructor
         $tempConfig = array();
         $tempConfig['connect_timeout'] = $configuration['connectTimeout'];
+        $tempConfig['heartbeat']       = $configuration['heartbeat'];
 
         // initialize the connection
         $connection = new AMQPConnection($tempConfig);
@@ -182,13 +183,24 @@ class Amqp implements Interfaces\Amqp
         // get the bindings and apply them
         if (isset($configuration['bindings'])) {
             $bindings = $configuration['bindings'];
+
+            // move bindings scheduled for removal to the top
+            usort($bindings, function($current, $next) {
+                return ($current['delete'] && !$next['delete']) ? 0 : 1;
+            });
+
             foreach ($bindings as $binding) {
                 if (isset($binding['arguments'])) {
                     $arguments = $binding['arguments'];
                 } else {
                     $arguments = array();
                 }
-                $queue->bind($binding['exchange'], $binding['routingKey'], $arguments);
+
+                if (isset($binding['delete']) && $binding['delete'] === true) {
+                    $queue->unbind($binding['exchange'], $binding['routingKey'], $arguments);
+                } else {
+                    $queue->bind($binding['exchange'], $binding['routingKey'], $arguments);
+                }
             }
         }
 
@@ -269,8 +281,18 @@ class Amqp implements Interfaces\Amqp
         // get the bindings and apply them
         if (isset($configuration['bindings'])) {
             $bindings = $configuration['bindings'];
+
+            // move bindings scheduled for removal to the top
+            usort($bindings, function($current, $next) {
+                return ($current['delete'] && !$next['delete']) ? 0 : 1;
+            });
+
             foreach ($bindings as $binding) {
-                $exchange->bind($binding['exchange'], $binding['routingKey']);
+                if (isset($binding['delete']) && $binding['delete'] === true) {
+                    $exchange->unbind($binding['exchange'], $binding['routingKey']);
+                } else {
+                    $exchange->bind($binding['exchange'], $binding['routingKey']);
+                }
             }
         }
 
