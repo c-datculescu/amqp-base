@@ -42,6 +42,11 @@ class Simple implements Publisher
             $properties['timestamp'] = microtime(true);
         }
 
+        // make messages durable by default
+        if (!isset($properties['delivery_mode'])) {
+            $properties['delivery_mode'] = 2;
+        }
+
         $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
 
         return $response;

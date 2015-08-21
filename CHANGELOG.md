@@ -5,6 +5,7 @@ v0.3.28
     * Implemented support for deleting bindings
     * Implemented consumer tag
     * Changed s2 dependencies to 2.\* to allow older versions 
+    * Messages are now durable by default
 
 v0.3.16 - 2015-02-22
 
