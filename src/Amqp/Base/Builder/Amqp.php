@@ -79,7 +79,11 @@ class Amqp implements Interfaces\Amqp
         // this option needs to be passed to constructor
         $tempConfig = array();
         $tempConfig['connect_timeout'] = $configuration['connectTimeout'];
-        $tempConfig['heartbeat']       = $configuration['heartbeat'];
+
+        // disable heartbeat if it is 0
+        if ($configuration['heartbeat'] > 0) {
+            $tempConfig['heartbeat'] = $configuration['heartbeat'];
+        }
 
         // initialize the connection
         $connection = new AMQPConnection($tempConfig);
