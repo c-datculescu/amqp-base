@@ -17,7 +17,7 @@ services:
       - @amqp.config.loader
 
   amqp.builder.factory:
-    class: \Amqp\Base\Builder\Amqp
+    class: \Amqp\Builder
     arguments:
       - @amqp.config.factory
 

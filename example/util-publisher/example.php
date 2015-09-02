@@ -8,7 +8,9 @@ $loader      = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader(
 $loader->load('services.yml');
 $container->setParameter('config_path', __DIR__ . '/config');
 
-$publisher = $container->get('publisher.demo');
+//var_dump($container->get('amqp.builder.factory')->releaseConnAndDeps());
+
+$publisher = $container->get('amqp.builder.factory')->publisher('testExchange');
 
 $message = 'test';
 $publisher->publish($message, "example.test");
