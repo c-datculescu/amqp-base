@@ -1,4 +1,0 @@
-services:
-  # define rprocessors
-  processor.rpc:
-    class: ProcessorRpc

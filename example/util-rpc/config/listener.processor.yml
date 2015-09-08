@@ -1,7 +1,0 @@
-services:
-  # define rprocessors
-  processor.test:
-    class: Processor
-
-  processor.test2:
-    class: Processor2

@@ -1,5 +1,0 @@
-services:
-  exchange.test:
-    factory: ["@amqp.builder.factory", exchange]
-    arguments:
-      - rpc
