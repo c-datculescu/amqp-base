@@ -38,6 +38,14 @@ class Lazy implements PublisherInterface
     }
 
     /**
+     * @return string
+     */
+    public function getExchangeName()
+    {
+        return $this->exchangeName;
+    }
+
+    /**
      * @inheritdoc
      */
     public function publish($message, $routingKey = '', array $properties = [])
@@ -70,7 +78,7 @@ class Lazy implements PublisherInterface
         } while (!$sent && ++$try < $this->options['max_tries']);
 
         if (!$sent) {
-            throw new Exception("Couldn't publish message.", $lastException->getCode(), $lastException);
+            throw $lastException;
         }
 
         return $response;
