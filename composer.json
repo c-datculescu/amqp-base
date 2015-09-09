@@ -15,6 +15,9 @@
             "email": "vstepanuyk@gmail.com"
         }
     ],
+    "require": {
+        "videlalvaro/php-amqplib": "2.5.*"
+    },
     "autoload": {
         "psr-4": {
             "\\Amqp\\": "src/"
