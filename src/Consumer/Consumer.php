@@ -4,15 +4,15 @@ namespace Amqp\Consumer;
 
 class Consumer extends AbstractConsumer
 {
-
     /**
      * @param string $queue
      * @param callable $callback
+     * @param array $options
      * @return void
      */
-    public function listen($queue, callable $callback)
+    public function listen($queue, callable $callback, array $options = array())
     {
-        // TODO: Implement listen() method.
+        return $this->adapter->listen($queue, $callback, $options);
     }
 
     /**
@@ -21,6 +21,6 @@ class Consumer extends AbstractConsumer
      */
     public function getMessage($queue)
     {
-        // TODO: Implement getMessage() method.
+        return $this->adapter->getMessage($queue);
     }
 }

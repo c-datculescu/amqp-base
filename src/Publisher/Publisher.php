@@ -12,8 +12,8 @@ class Publisher extends AbstractPublisher
      * @param string $routingKey
      * @return boolean
      */
-    public function publish($exchange, MessageInterface $message, $routingKey)
+    public function publish($exchange, MessageInterface $message, $routingKey = '')
     {
-        // TODO: Implement publish() method.
+        return $this->adapter->publish($exchange, $message, $routingKey);
     }
 }
