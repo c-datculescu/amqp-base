@@ -1,6 +1,8 @@
 <?php
 
-namespace Amqp\Consumer;
+namespace Amqp;
+
+use Amqp\Consumer\AbstractConsumer;
 
 class Consumer extends AbstractConsumer
 {

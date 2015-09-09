@@ -1,8 +1,9 @@
 <?php
 
-namespace Amqp\Publisher;
+namespace Amqp;
 
 use Amqp\Message\MessageInterface;
+use Amqp\Publisher\AbstractPublisher;
 
 class Publisher extends AbstractPublisher
 {
