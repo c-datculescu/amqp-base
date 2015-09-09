@@ -2,20 +2,9 @@
 
 namespace Amqp\Publisher;
 
-use Amqp\Adapter\AdapterInterface;
+use Amqp\Adapter\AbstractAdapterAware;
 
-abstract class AbstractPublisher implements PublisherInterface
+abstract class AbstractPublisher extends AbstractAdapterAware implements PublisherInterface
 {
-    /**
-     * @var AdapterInterface
-     */
-    protected $adapter;
 
-    /**
-     * @param AdapterInterface $adapterInterface
-     */
-    public function __construct(AdapterInterface $adapterInterface)
-    {
-        $this->adapter = $adapterInterface;
-    }
 }
