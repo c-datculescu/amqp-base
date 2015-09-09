@@ -2,8 +2,6 @@
 
 namespace Amqp\Adapter;
 
-use Amqp\Adapter\AdapterInterface;
-
 abstract class AdapterAbstract implements AdapterInterface
 {
     /**
