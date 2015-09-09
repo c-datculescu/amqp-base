@@ -58,11 +58,11 @@ class ExtAdapter extends AbstractAdapter
     /**
      * @inheritdoc
      */
-    public function listen($queue, callable $callable, array $options = [])
+    public function listen($queue, callable $callback, array $options = [])
     {
-        $this->getQueue($queue)->consume(function (\AMQPEnvelope $envelope) {
-            
-        }, $this->getQueueFlags($options));
+        $this->getQueue($queue)->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback) {
+            call_user_func_array($callback, [$this->convertMessage($envelope)]);
+        }, $this), $this->getQueueFlags($options));
     }
 
     /**
@@ -84,9 +84,8 @@ class ExtAdapter extends AbstractAdapter
     protected function getQueueFlags(array $options = [])
     {
         $optionsFlagsMapping = ['auto_ack' => AMQP_AUTOACK];
-        $flags = array_values(array_intersect_key($optionsFlagsMapping, array_filter($options)));
 
-        return array_sum($flags);
+        return array_sum(array_values(array_intersect_key($optionsFlagsMapping, array_filter($options))));
     }
 
     /**
