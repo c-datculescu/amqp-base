@@ -50,14 +50,8 @@ class ExtAdapter extends AbstractAdapter
                 'delivery_mode' => $message->getProperties(),
                 // @TODO: Add more fields
             ]);
-        } catch (\AMQPException $e) {
-            throw new Exception($e->getMessage(), $e->getCode(), $e);
-        } catch (\AMQPConnectionException $e) {
-            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
-        } catch (\AMQPChannelException $e) {
-            throw new ChannelException($e->getMessage(), $e->getCode(), $e);
-        } catch (\AMQPExchangeException $e) {
-            throw new ExchangeException($e->getMessage(), $e->getCode(), $e);
+        } catch (\Exception $e) {
+            throw $this->convertException($e);
         }
     }
 
@@ -189,5 +183,25 @@ class ExtAdapter extends AbstractAdapter
     protected function getQueue($name)
     {
 
+    }
+
+    /**
+     * @param \Exception $e
+     * @return Exception|ChannelException|ConnectionException|ExchangeException|\Exception
+     */
+    protected function convertException(\Exception $e)
+    {
+        switch(get_class($e)) {
+            case 'AMQPException':
+                return new Exception($e->getMessage(), $e->getCode(), $e);
+            case 'AMQPConnectionException':
+                return new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            case 'AMQPChannelException':
+                return new ChannelException($e->getMessage(), $e->getCode(), $e);
+            case 'AMQPExchangeException':
+                return new ExchangeException($e->getMessage(), $e->getCode(), $e);
+            default:
+                return $e;
+        }
     }
 }

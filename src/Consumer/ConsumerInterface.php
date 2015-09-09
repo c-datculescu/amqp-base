@@ -14,7 +14,8 @@ interface ConsumerInterface
 
     /**
      * @param string $queue
+     * @param array $options
      * @return \Amqp\Message\MessageInterface
      */
-    public function getMessage($queue);
+    public function getMessage($queue, array $options = []);
 }

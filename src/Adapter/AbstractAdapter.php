@@ -11,15 +11,6 @@ abstract class AbstractAdapter implements AdapterInterface
     protected $config;
 
     /**
-     * Constructor
-     * @param array $config Configuration options
-     */
-    public function __construct(array $config = [])
-    {
-        $this->config = $config;
-    }
-
-    /**
      * Set config
      *
      * @param array $config Configuration options
