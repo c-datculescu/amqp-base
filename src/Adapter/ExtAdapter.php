@@ -73,7 +73,7 @@ class ExtAdapter extends AbstractAdapter
     {
         $this->getQueue($queue)->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback) {
             call_user_func_array($callback, [$this->convertMessage($envelope)]);
-        }, $this), $this->getQueueFlags($options));
+        }, $this), $this->getListenFlags($options));
     }
 
     /**
@@ -81,22 +81,51 @@ class ExtAdapter extends AbstractAdapter
      */
     public function getMessage($queue, array $options = [])
     {
-        $rawMessage = $this->getQueue($queue)->get($this->getQueueFlags($options));
+        $rawMessage = $this->getQueue($queue)->get($this->getListenFlags($options));
         return $this->convertMessage($rawMessage);
     }
 
     /**
-     * Get queue flags
+     * Get listen flags
      *
      * @param array $options The queue options
      *
      * @return int
      */
+    protected function getListenFlags(array $options = [])
+    {
+        return $this->convertOptionsToFlags([
+            'auto_ack' => AMQP_AUTOACK
+        ], $options);
+    }
+
     protected function getQueueFlags(array $options = [])
     {
-        $optionsFlagsMapping = ['auto_ack' => AMQP_AUTOACK];
+        return $this->convertOptionsToFlags([
+            'durable'    => AMQP_DURABLE,
+            'passive'    => AMQP_PASSIVE,
+            'exclusive'  => AMQP_EXCLUSIVE,
+            'autodelete' => AMQP_AUTODELETE
+        ], array_combine($options, array_fill(0, count($options), true)));
+    }
 
-        return array_sum(array_values(array_intersect_key($optionsFlagsMapping, array_filter($options))));
+    protected function getExchangeFlags(array $options = [])
+    {
+        return $this->convertOptionsToFlags([
+            'durable'    => AMQP_DURABLE,
+            'passive'    => AMQP_PASSIVE,
+        ], array_combine($options, array_fill(0, count($options), true)));
+    }
+
+    /**
+     * @param array $map
+     * @param array $options
+     *
+     * @return number
+     */
+    protected function convertOptionsToFlags($map = [], array $options = [])
+    {
+        return array_sum(array_values(array_intersect_key($map, array_filter($options))));
     }
 
     /**
@@ -170,6 +199,9 @@ class ExtAdapter extends AbstractAdapter
             $exchange->setArguments($exchangeConfig['attributes']);
         }
 
+        $exchange->setFlags($this->getExchangeFlags(isset($exchangeConfig['flags']) ? $exchangeConfig['flags'] : 'durable'));
+        $exchange->declareExchange();
+
         return $exchange;
     }
 
@@ -241,6 +273,9 @@ class ExtAdapter extends AbstractAdapter
         if (isset($queueConfig['attributes'])) {
             $queue->setArguments($queueConfig['attributes']);
         }
+
+        $queue->setFlags($this->getQueueFlags(isset($queueConfig['flags']) ? $queueConfig['flags'] : 'durable'));
+        $queue->declareQueue();
 
         return $queue;
     }
