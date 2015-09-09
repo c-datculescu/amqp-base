@@ -4,7 +4,7 @@ namespace Amqp\Publisher;
 
 use Amqp\Adapter\AdapterInterface;
 
-abstract class AbstractPublisher implements  PublisherInterface
+abstract class AbstractPublisher implements PublisherInterface
 {
     /**
      * @var AdapterInterface

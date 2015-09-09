@@ -2,7 +2,7 @@
 
 namespace Amqp\Adapter;
 
-abstract class AdapterAbstract implements AdapterInterface
+abstract class AbstractAdapter implements AdapterInterface
 {
     /**
      * Configuration
