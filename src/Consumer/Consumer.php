@@ -2,18 +2,8 @@
 
 namespace Amqp\Consumer;
 
-use Amqp\Adapter\AdapterInterface;
-
 class Consumer extends AbstractConsumer
 {
-
-    /**
-     * @param AdapterInterface $adapterInterface
-     */
-    public function __construct(AdapterInterface $adapterInterface)
-    {
-        // TODO: Implement __construct() method.
-    }
 
     /**
      * @param string $queue

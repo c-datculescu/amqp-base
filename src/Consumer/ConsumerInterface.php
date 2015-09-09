@@ -2,15 +2,8 @@
 
 namespace Amqp\Consumer;
 
-use Amqp\Adapter\AdapterInterface;
-
 interface ConsumerInterface
 {
-    /**
-     * @param AdapterInterface $adapterInterface
-     */
-    public function __construct(AdapterInterface $adapterInterface);
-
     /**
      * @param string $queue
      * @param callable $callback
