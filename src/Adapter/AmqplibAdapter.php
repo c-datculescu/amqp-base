@@ -14,43 +14,6 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 class AmqplibAdapter extends AbstractAdapter
 {
 
-    protected $defaultConfig = array(
-        'connection' => array(
-            'host'                  => 'localhost',
-            'port'                  => 5672,
-            'vhost'                 => '/',
-            'login'                 => 'guest',
-            'password'              => 'guest',
-            'connect_timeout'       => 1,
-            'read_write_timeout'    => 3,
-            'heartbeat'             => 10,
-            'keepalive'             => true,
-            'prefetch_count'        => 3,
-        ),
-        'queue' => array(
-            'flags'                 => array('durable'),
-            'arguments'             => array(),
-            'passive'               => false,
-            'durable'               => true,
-            'exclusive'             => false,
-            'auto_delete'           => false,
-            'bindings'              => array(),
-            'type'                  => 'topic',
-        ),
-        'exchanges' => array(
-            'flags'                 => array('durable'),
-            'type'                  => 'topic',
-            'arguments'             => array(),
-            'passive'               => false,
-            'durable'               => true,
-        ),
-        'listener' => array(
-            'auto_ack'                  => false,
-            'exclusive'                 => false,
-            'multiple_acknowledgement'  => false,
-        ),
-    );
-
     /**
      * The final processed configuration for connections, queues and exchanges
      *
@@ -96,7 +59,7 @@ class AmqplibAdapter extends AbstractAdapter
      *
      * @param string $queueName  The name of the queue to be used
      * @param callable $callback The callback from userland to be used. Accepts one parameter, message
-     * @param array $options     The set of options to pass to the listening [multiple_acknowledgement => false]
+     * @param array $options     The set of options to pass to the listening [multi_ack => false]
      */
     public function listen($queueName, callable $callback, array $options = array())
     {
@@ -107,7 +70,7 @@ class AmqplibAdapter extends AbstractAdapter
 
         $queueConfig = $this->queueConfig($queueName);
 
-        if ($options['multiple_acknowledgement'] == true) {
+        if ($options['multi_ack'] == true) {
             // acknowledge at prefetch_count / 2 if prefetch count is set
             $connectionName = $this->finalConfig['queues'][$queueName]['connection'];
             $properties = $this->connectionConfig($connectionName);
@@ -161,11 +124,6 @@ class AmqplibAdapter extends AbstractAdapter
         while (count($channel->callbacks)) {
             $channel->wait();
         }
-    }
-
-    public function getMessage($queue, array $options = array())
-    {
-
     }
 
     /**
@@ -379,7 +337,14 @@ class AmqplibAdapter extends AbstractAdapter
         return $finalQueueConfig;
     }
 
-    protected function exchangeConfig($exchangeName)
+    /**
+     * Prepares the configuration for exchange
+     *
+     * @param string $name The name of the exchange from the config
+     *
+     * @return array
+     */
+    protected function exchangeConfig($name)
     {
         // config exists already in the cache, return it immediately
         if (isset($this->finalConfig['exchanges'][$name])) {
