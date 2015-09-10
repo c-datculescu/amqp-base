@@ -51,7 +51,9 @@ class AmqplibAdapter extends AbstractAdapter
 
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
     {
+        $exchangeConfig = $this->exchangeConfig($exchangeName);
 
+        $channel = $this->channel($this->finalConfig['exchanges'][$exchangeName]['connection']);
     }
 
     /**
