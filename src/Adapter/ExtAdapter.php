@@ -71,10 +71,14 @@ class ExtAdapter extends AbstractAdapter
      */
     public function listen($queue, callable $callback, array $options = [])
     {
-        $this->getQueue($queue)->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback) {
-            call_user_func_array($callback, [$this->convertMessage($envelope)]);
-        }, $this), $this->getListenFlags($options));
-    }
+        try {
+            $this->getQueue($queue)->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback) {
+                call_user_func_array($callback, [$this->convertMessage($envelope)]);
+            }, $this), $this->getListenFlags($options));
+        } catch (\Exception $e) {
+            throw $this->convertException($e);
+        }
+     }
 
     /**
      * @inheritdoc
@@ -199,6 +203,7 @@ class ExtAdapter extends AbstractAdapter
             $exchange->setArguments($exchangeConfig['attributes']);
         }
 
+        $exchange->setType(isset($exchangeConfig['type']) ? $exchangeConfig['type'] : 'topic');
         $exchange->setFlags($this->getExchangeFlags(isset($exchangeConfig['flags']) ? $exchangeConfig['flags'] : 'durable'));
         $exchange->declareExchange();
 
