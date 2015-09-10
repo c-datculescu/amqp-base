@@ -1,7 +1,6 @@
 <?php
 /**
  * @todo cache for connections
- * @todo bindings
  * @todo getMessage
  * @todo publish
  * @todo implement dynamic naming for queues
@@ -31,10 +30,19 @@ class AmqplibAdapter extends AbstractAdapter
         'queue' => array(
             'flags'                 => array('durable'),
             'arguments'             => array(),
+            'passive'               => false,
+            'durable'               => true,
+            'exclusive'             => false,
+            'auto_delete'           => false,
+            'bindings'              => array(),
+            'type'                  => 'topic',
         ),
         'exchanges' => array(
             'flags'                 => array('durable'),
             'type'                  => 'topic',
+            'arguments'             => array(),
+            'passive'               => false,
+            'durable'               => true,
         ),
         'listener' => array(
             'auto_ack'                  => false,
@@ -49,13 +57,14 @@ class AmqplibAdapter extends AbstractAdapter
      * @var array
      */
     protected $finalConfig = array(
-        'connections' => array()
+        'connections' => array(),
+        'queues' => array(),
     );
 
     /**
      * The currently opened channels
      *
-     * @var array
+     * @var AMQPChannel[]
      */
     protected $channels = array();
 
@@ -65,6 +74,16 @@ class AmqplibAdapter extends AbstractAdapter
      * @var array
      */
     protected $counters = array();
+
+    /**
+     * Temporarily mark all dependencies here, so we can have a refcount for all of them
+     *
+     * @var array
+     */
+    protected $dependenciesCounter = array(
+        'exchanges' => array(),
+        'queues'    => array(),
+    );
 
 
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
@@ -102,8 +121,7 @@ class AmqplibAdapter extends AbstractAdapter
         $channel = $this->channel($this->finalConfig['queues'][$queueName]['connection']);
 
         // declare the queue
-        // @todo use the config for the parameters of queue_declare
-        $channel->queue_declare($queueConfig['name'], false, true, false, false, false, null, null);
+        $this->declareQueue($channel, $queueName);
 
         $internalCallback  = \Closure::bind(function($message) use ($queueName, $channel, $callback, $options, $ackAt) {
             $return = call_user_func($callback, $message);
@@ -159,6 +177,16 @@ class AmqplibAdapter extends AbstractAdapter
      */
     protected function channel($name)
     {
+        // check cache for channel
+        if (isset($this->channels[$name])) {
+            // is the connection still up?
+            if ($this->channels[$name]->getConnection()->isConnected()) {
+                // return it
+                return $this->channels[$name];
+            }
+        }
+
+        // if the connection is no longer up, remake it
         $config = $this->connectionConfig($name);
         $connection = new AMQPStreamConnection(
             $config['host'],
@@ -187,9 +215,105 @@ class AmqplibAdapter extends AbstractAdapter
     }
 
     /**
-     * Retrieves and converts a generic configuration for a connection
+     * Declares a queue with all its dependencies
      *
-     * @todo if config is already parsed, return it directly
+     * @param AMQPChannel $channel The open channel on which the queue should be declared
+     * @param string $queueName    The queue name
+     *
+     * @return bool
+     */
+    protected function declareQueue(AMQPChannel $channel, $queueName)
+    {
+        $this->detectCircularDependencies('queue', $queueName);
+
+        $options = $this->queueConfig($queueName);
+
+        // increase dependency counter
+        $this->dependenciesCounter['queues'][$queueName] += 1;
+
+        // check for bindings/dependencies
+        foreach ($options['bindings'] as $bind) {
+            $this->declareExchange($channel, $bind['exchange']);
+            $channel->queue_bind($queueName, $bind['exchange'], $bind['routing_key']);
+        }
+
+        // @todo use the config for the parameters of queue_declare
+        $result = $channel->queue_declare(
+            $queueName,
+            $options['passive'],        // $passive
+            $options['durable'],        // $durable
+            $options['exclusive'],      // $exclusive
+            $options['auto_delete'],    // $auto_delete
+            false,                      // $nowait
+            $options['arguments'],      // $arguments
+            null                        // $ticket
+        );
+
+        // remove the dependency since we reached this step
+        unset($this->dependenciesCounter['queues'][$queueName]);
+
+        return $result;
+    }
+
+    /**
+     * Declare an exchange
+     *
+     * @param AMQPChannel $channel The channel on which the exchange needs to be declared
+     * @param string $exchangeName The name of the exchange to be declared
+     *
+     * @return bool
+     */
+    protected function declareExchange(AMQPChannel $channel, $exchangeName)
+    {
+        $this->detectCircularDependencies('exchange', $exchangeName);
+
+        $options = $this->exchangeConfig($exchangeName);
+
+        $this->dependenciesCounter['exchanges'][$exchangeName] += 1;
+
+        // check for all dependencies
+        foreach ($options['bindings'] as $bind) {
+            $this->declareExchange($channel, $bind['exchange']);
+            $channel->exchange_bind($exchangeName, $bind['exchange'], $bind['routing_key']);
+        }
+
+        $result = $channel->exchange_declare(
+            $exchangeName,          // $name
+            $options['type'],       // $type
+            $options['passive'],    // $passive
+            $options['durable'],    // $durable
+            false,                  // $auto_delete
+            false,                  // $internal
+            false,                  // $nowait
+            $options['arguments'],  // $arguments
+            null                    // $ticket
+        );
+
+        unset($this->dependenciesCounter['exchanges'][$exchangeName]);
+
+        return $result;
+    }
+
+    /**
+     * Attempts to detect circular dependencies in config declarations
+     *
+     * @param string $type Type of the current dependency [queue, exchange]
+     * @param string $name The name of the dependency
+     * @throws \Exception if a cyclic dependency is detected
+     */
+    protected function detectCircularDependencies($type, $name)
+    {
+        if (isset($this->dependenciesCounter[$type][$name])) {
+            if ($this->dependenciesCounter[$type][$name] > 0) {
+                throw new \Exception("Circular dependencies detected!");
+            }
+        } else {
+            $this->dependenciesCounter[$type][$name] = 0;
+        }
+    }
+
+    /**
+     * Retrieves and converts a generic configuration for a connection
      *
      * @param string $name The name of the connection to use
      *
@@ -197,6 +321,11 @@ class AmqplibAdapter extends AbstractAdapter
      */
     protected function connectionConfig($name)
     {
+        // if we have the connection config cached, return it
+        if (isset($this->finalConfig['connections'][$name])) {
+            return $this->finalConfig['connections'][$name];
+        }
+
         if (!isset($this->config['connections'][$name])) {
             throw new \InvalidArgumentException("Connection '{$name}' doesn't exists.");
         }
@@ -227,14 +356,17 @@ class AmqplibAdapter extends AbstractAdapter
     /**
      * Returns the processed queue config
      *
-     * @todo if config is already parsed, return it directly
-     *
      * @param string $name The configuration name for the queue
      *
      * @return array
      */
     protected function queueConfig($name)
     {
+        // config exists already in the cache, return it immediately
+        if (isset($this->finalConfig['queues'][$name])) {
+            return $this->finalConfig['queues'][$name];
+        }
+
         if (!isset($this->config['queues'][$name])) {
             throw new \InvalidArgumentException("Queue '{$name}' doesn't exists.");
         }
@@ -246,4 +378,24 @@ class AmqplibAdapter extends AbstractAdapter
 
         return $finalQueueConfig;
     }
+
+    protected function exchangeConfig($exchangeName)
+    {
+        // config exists already in the cache, return it immediately
+        if (isset($this->finalConfig['exchanges'][$name])) {
+            return $this->finalConfig['exchanges'][$name];
+        }
+
+        if (!isset($this->config['exchanges'][$name])) {
+            throw new \InvalidArgumentException("Exchange '{$name}' doesn't exists.");
+        }
+
+        $localConfig = $this->config['exchanges'][$name];
+        $finalExchangeConfig = array_merge($this->defaultConfig['exchanges'], $localConfig);
+
+        $this->finalConfig['exchanges'][$name] = $finalExchangeConfig;
+
+        return $finalExchangeConfig;
+    }
+
 }
