@@ -57,10 +57,10 @@ class ExtAdapter extends AbstractAdapter
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
     {
         try {
-            return $this->getExchange($exchangeName)->publish($message->getPayload(), $routingKey, AMQP_NOPARAM, [
-                'delivery_mode' => $message->getProperties(),
-                // @TODO: Add more fields
-            ]);
+            $props = $message->getProperties();
+            $props['delivery_mode'] = $message->getDeliveryMode();
+
+            return $this->getExchange($exchangeName)->publish($message->getPayload(), $routingKey, AMQP_NOPARAM, $props);
         } catch (\Exception $e) {
             throw $this->convertException($e);
         }
@@ -203,6 +203,7 @@ class ExtAdapter extends AbstractAdapter
             $exchange->setArguments($exchangeConfig['attributes']);
         }
 
+        $exchange->setName(is_callable($exchangeConfig['name']) ? call_user_func($exchangeConfig['name']) : $exchangeConfig['name']);
         $exchange->setType(isset($exchangeConfig['type']) ? $exchangeConfig['type'] : 'topic');
         $exchange->setFlags($this->getExchangeFlags(isset($exchangeConfig['flags']) ? $exchangeConfig['flags'] : 'durable'));
         $exchange->declareExchange();
@@ -267,8 +268,7 @@ class ExtAdapter extends AbstractAdapter
             foreach ($queueConfig['bindings'] as $binding) {
                 try {
                     $this->getExchange($binding['exchange']);
-                } catch (\InvalidArgumentException $e) {
-                }
+                } catch (\InvalidArgumentException $e) {}
 
                 $queue->bind($binding['exchange'], $binding['routing_key'],
                     isset($binding['arguments']) ? $binding['arguments'] : []);
@@ -276,10 +276,18 @@ class ExtAdapter extends AbstractAdapter
         }
 
         if (isset($queueConfig['attributes'])) {
+
+            if (isset($queueConfig['attributes']['x-dead-letter-exchange'])) {
+                try {
+                    $this->getExchange($queueConfig['attributes']['x-dead-letter-exchange']);
+                } catch (\InvalidArgumentException $e) {}
+            }
+
             $queue->setArguments($queueConfig['attributes']);
         }
 
         $queue->setFlags($this->getQueueFlags(isset($queueConfig['flags']) ? $queueConfig['flags'] : 'durable'));
+        $queue->setName(is_callable($queueConfig['name']) ? call_user_func($queueConfig['name']) : $queueConfig['name']);
         $queue->declareQueue();
 
         return $queue;
