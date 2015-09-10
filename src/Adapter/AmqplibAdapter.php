@@ -1,4 +1,11 @@
 <?php
+/**
+ * @todo cache for connections
+ * @todo bindings
+ * @todo getMessage
+ * @todo publish
+ * @todo implement dynamic naming for queues
+ */
 namespace Amqp\Adapter;
 
 use Amqp\Message\MessageInterface;
@@ -10,23 +17,29 @@ class AmqplibAdapter extends AbstractAdapter
 
     protected $defaultConfig = array(
         'connection' => array(
-            'host' => 'localhost',
-            'port' => 5672,
-            'vhost' => '/',
-            'login' => 'guest',
-            'password' => 'guest',
-            'connect_timeout' => 1,
-            'read_write_timeout' => 0,
-            'heartbeat' => 10,
-            'keepalive' => true,
-            'prefetch_count' => 3,
+            'host'                  => 'localhost',
+            'port'                  => 5672,
+            'vhost'                 => '/',
+            'login'                 => 'guest',
+            'password'              => 'guest',
+            'connect_timeout'       => 1,
+            'read_write_timeout'    => 3,
+            'heartbeat'             => 10,
+            'keepalive'             => true,
+            'prefetch_count'        => 3,
         ),
         'queue' => array(
-            'flags' => array('durable')
+            'flags'                 => array('durable'),
+            'arguments'             => array(),
         ),
         'exchanges' => array(
-            'flags' => array('durable'),
-            'type' => 'topic',
+            'flags'                 => array('durable'),
+            'type'                  => 'topic',
+        ),
+        'listener' => array(
+            'auto_ack'                  => false,
+            'exclusive'                 => false,
+            'multiple_acknowledgement'  => false,
         ),
     );
 
@@ -59,25 +72,60 @@ class AmqplibAdapter extends AbstractAdapter
 
     }
 
+    /**
+     * Listen for incoming messages
+     *
+     * @param string $queueName  The name of the queue to be used
+     * @param callable $callback The callback from userland to be used. Accepts one parameter, message
+     * @param array $options     The set of options to pass to the listening [multiple_acknowledgement => false]
+     */
     public function listen($queueName, callable $callback, array $options = array())
     {
+        $options = array_merge($this->defaultConfig['listener'], $options);
+
         // set the global counter
         $this->counters[$queueName] = 0;
 
-        $queueConfig = $this->finalConfig['queues'][$queueName];
+        $queueConfig = $this->queueConfig($queueName);
 
-        // acknowledge at prefetch_count / 2 if prefetch count is set
-        $connectionName = $this->finalConfig['queues'][$queueName]['connection'];
-        $properties = $this->connectionConfig($connectionName);
-        $ackAt = ceil($properties['prefetch_count']/2);
+        if ($options['multiple_acknowledgement'] == true) {
+            // acknowledge at prefetch_count / 2 if prefetch count is set
+            $connectionName = $this->finalConfig['queues'][$queueName]['connection'];
+            $properties = $this->connectionConfig($connectionName);
+
+            // force acknowledgements at ceil of quality of service (channel property)
+            $ackAt = ceil($properties['prefetch_count'] / 2);
+        } else {
+            $ackAt = 0;
+        }
 
         $channel = $this->channel($this->finalConfig['queues'][$queueName]['connection']);
 
-        $callback  = \Closure::bind(function($message) use ($queueName, $channel, $callback, $options, $ackAt) {
-            $return = $callback($message);
+        // declare the queue
+        // @todo use the config for the parameters of queue_declare
+        $channel->queue_declare($queueConfig['name'], false, true, false, false, false, null, null);
+
+        $internalCallback  = \Closure::bind(function($message) use ($queueName, $channel, $callback, $options, $ackAt) {
+            $return = call_user_func($callback, $message);
             if ($return == true) {
-                $this->counters[$queueName] += 1;
+                if ($ackAt !== 0) {
+                    $this->counters[$queueName] += 1;
+                    if ($this->counters[$queueName] == $ackAt) {
+                        // multiple acknowledgements
+                        $channel->basic_ack($message->delivery_info['delivery_tag'], true);
+                        $this->counters[$queueName] = 0;
+                    }
+                } else {
+                    // ack one by one
+                    if (isset($options['auto_ack']) && $options['auto_ack'] == false) {
+                        $channel->basic_ack($message->delivery_info['delivery_tag']);
+                    }
+                }
+            } else {
+                $channel->basic_nack($message->delivery_info['delivery_tag']);
             }
+
+            return true;
         }, $this);
 
         $channel->basic_consume(
@@ -87,15 +135,14 @@ class AmqplibAdapter extends AbstractAdapter
             $options['auto_ack'],       // $no_ack
             $options['exclusive'],      // $exclusive
             false,                      // $nowait
-            $callback,                  // $callback
+            $internalCallback,          // $callback
             null,                       // $ticket
             $queueConfig['arguments']   // $arguments
         );
-    }
 
-    public function callback($message)
-    {
-
+        while (count($channel->callbacks)) {
+            $channel->wait();
+        }
     }
 
     public function getMessage($queue, array $options = array())
@@ -160,7 +207,17 @@ class AmqplibAdapter extends AbstractAdapter
             $localConfig['read_write_timeout'] = min($localConfig['read_timeout'], $localConfig['write_timeout']);
         }
 
+
         $config = array_merge($this->defaultConfig['connection'], $localConfig);
+
+        $rwt = $config['read_write_timeout'];
+        $hb = $this->defaultConfig['connection']['heartbeat'];
+
+        // @todo investigate why the connection times out if the read_write_timeout is less than heartbeat * 2
+        if ($rwt < $hb*2) {
+            $config['read_write_timeout'] = $hb*2;
+        }
+
         $this->finalConfig['connections'][$name] = $config;
 
 
