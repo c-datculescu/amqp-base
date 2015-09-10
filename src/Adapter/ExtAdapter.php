@@ -75,7 +75,11 @@ class ExtAdapter extends AbstractAdapter
             $queue = $this->getQueue($queue);
             $queue->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback, $queue) {
                 $result = call_user_func_array($callback, [$this->convertMessage($envelope)]);
-                $queue->ack($envelope->getDeliveryTag());
+                if ($result) {
+                    $queue->ack($envelope->getDeliveryTag());
+                } else {
+                    $queue->nack($envelope->getDeliveryTag());
+                }
             }, $this), $this->getListenFlags($options));
         } catch (\Exception $e) {
             throw $this->convertException($e);
@@ -269,7 +273,6 @@ class ExtAdapter extends AbstractAdapter
         }
 
         if (isset($queueConfig['attributes'])) {
-
             if (isset($queueConfig['attributes']['x-dead-letter-exchange'])) {
                 try {
                     $this->getExchange($queueConfig['attributes']['x-dead-letter-exchange']);
