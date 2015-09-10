@@ -20,7 +20,9 @@ return [
     ],
     'queues' => [
         'debug' => [
-            'name' => 'debug',
+            'name' => function () {
+                return 'queue-' . time();
+            },
             'flags' => ['durable'],
             'connection' => 'main',
             'bindings' => [
