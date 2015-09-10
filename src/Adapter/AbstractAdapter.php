@@ -2,13 +2,23 @@
 
 namespace Amqp\Adapter;
 
-abstract class AbstractAdapter implements AdapterInterface
+abstract class AbstractAdapter extends AbstractAdapterAware implements AdapterInterface
 {
     /**
      * Configuration
      * @var array
      */
     protected $config;
+
+    /**
+     * Constructor
+     *
+     * @param array $config The adapter config
+     */
+    public function __construct(array $config = [])
+    {
+        $this->config = $config;
+    }
 
     /**
      * Set config
