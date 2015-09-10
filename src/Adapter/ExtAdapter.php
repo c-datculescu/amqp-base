@@ -203,6 +203,7 @@ class ExtAdapter extends AbstractAdapter
             $exchange->setArguments($exchangeConfig['attributes']);
         }
 
+        $exchange->setType(isset($exchangeConfig['type']) ? $exchangeConfig['type'] : 'topic');
         $exchange->setFlags($this->getExchangeFlags(isset($exchangeConfig['flags']) ? $exchangeConfig['flags'] : 'durable'));
         $exchange->declareExchange();
 
