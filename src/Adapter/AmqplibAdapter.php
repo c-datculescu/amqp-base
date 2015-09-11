@@ -9,6 +9,7 @@ use Amqp\Message\MessageInterface;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use PhpAmqpLib\Wire\AMQPTable;
 
 class AmqplibAdapter extends AbstractAdapter
 {
@@ -58,7 +59,6 @@ class AmqplibAdapter extends AbstractAdapter
         $exchangeConfig = $this->exchangeConfig($exchangeName);
 
         $msg = $this->convertToAMQPMessage($message);
-        //var_dump($msg);die();
         $channel = $this->channel($this->finalConfig['exchanges'][$exchangeName]['connection']);
         $channel->basic_publish(
             $msg,
@@ -73,9 +73,10 @@ class AmqplibAdapter extends AbstractAdapter
      */
     protected function convertToAMQPMessage(MessageInterface $message)
     {
+        $deliveryMode = $message->getDeliveryMode();
         $properties = $message->getProperties();
-        $properties['application_headers'] = $message->getHeaders();
-        $properties['delivery_mode'] = $message->getDeliveryMode();
+        $properties['application_headers'] = new AMQPTable($message->getHeaders());
+        $properties['delivery_mode'] =  $deliveryMode ?: 2; // default: durable
 
         return new AMQPMessage($message->getPayload(), $properties);
     }
@@ -111,8 +112,6 @@ class AmqplibAdapter extends AbstractAdapter
             },
             $properties
         );
-
-        var_dump($amqpMessage);
 
         $message = new Message();
         $message->setPayload($amqpMessage->body)
@@ -261,6 +260,13 @@ class AmqplibAdapter extends AbstractAdapter
         }
         $this->dependenciesCounter['queues'][$queueName] += 1;
 
+        // check for bindings/dependencies
+        foreach ($options['bindings'] as $bind) {
+            var_dump($bind);
+            $this->declareExchange($channel, $bind['exchange']);
+            $channel->queue_bind($queueName, $bind['exchange'], $bind['routing_key']);
+        }
+
         $result = $channel->queue_declare(
             $queueName,
             $options['passive'],        // $passive
@@ -271,13 +277,6 @@ class AmqplibAdapter extends AbstractAdapter
             $options['arguments'],      // $arguments
             null                        // $ticket
         );
-
-        // check for bindings/dependencies
-        foreach ($options['bindings'] as $bind) {
-            $this->declareExchange($channel, $bind['exchange']);
-            $channel->queue_bind($queueName, $bind['exchange'], $bind['routing_key']);
-        }
-
         // remove the dependency since we reached this step
         unset($this->dependenciesCounter['queues'][$queueName]);
 
@@ -294,6 +293,7 @@ class AmqplibAdapter extends AbstractAdapter
      */
     protected function declareExchange(AMQPChannel $channel, $exchangeName)
     {
+die();
         $this->detectCircularDependencies('exchange', $exchangeName);
 
         $options = $this->exchangeConfig($exchangeName);
@@ -324,7 +324,7 @@ class AmqplibAdapter extends AbstractAdapter
         );
 
         unset($this->dependenciesCounter['exchanges'][$exchangeName]);
-
+var_dump($result);
         return $result;
     }
 
