@@ -6,7 +6,7 @@ return [
             'host'     => '192.168.56.52',
             'port'     => 5672,
             'login'    => 'admin',
-            'password' => 'admin',
+            'password' => 'mort487',
             'vhost'    => '/'
         ],
     ],

@@ -11,11 +11,4 @@ interface ConsumerInterface
      * @return void
      */
     public function listen($queue, callable $callback, array $options = array());
-
-    /**
-     * @param string $queue
-     * @param array $options
-     * @return \Amqp\Message\MessageInterface
-     */
-    public function getMessage($queue, array $options = []);
 }
