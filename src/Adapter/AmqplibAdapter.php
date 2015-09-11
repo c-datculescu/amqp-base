@@ -182,7 +182,7 @@ class AmqplibAdapter extends AbstractAdapter
             '',                         // $consumer_tag
             false,                      // $no_local
             $options['auto_ack'],       // $no_ack
-            $options['exclusive'],      // $exclusive
+            false,      // $exclusive
             false,                      // $nowait
             $internalCallback,          // $callback
             null,                       // $ticket
@@ -259,15 +259,9 @@ class AmqplibAdapter extends AbstractAdapter
             $this->dependenciesCounter['queues'][$queueName] = 0;
         }
         $this->dependenciesCounter['queues'][$queueName] += 1;
-
-        // check for bindings/dependencies
-        foreach ($options['bindings'] as $bind) {
-            $this->declareExchange($channel, $bind['exchange']);
-            $channel->queue_bind($queueName, $bind['exchange'], $bind['routing_key']);
-        }
-
+        $channel->queue_declare();
         $result = $channel->queue_declare(
-            $queueName,
+            $options['name'],
             $options['passive'],        // $passive
             $options['durable'],        // $durable
             $options['exclusive'],      // $exclusive
@@ -276,6 +270,13 @@ class AmqplibAdapter extends AbstractAdapter
             $options['arguments'],      // $arguments
             null                        // $ticket
         );
+
+        // check for bindings/dependencies
+        foreach ($options['bindings'] as $bind) {
+            $this->declareExchange($channel, $bind['exchange']);
+            $channel->queue_bind($options['name'], $bind['exchange'], $bind['routing_key']);
+        }
+
         // remove the dependency since we reached this step
         unset($this->dependenciesCounter['queues'][$queueName]);
 
