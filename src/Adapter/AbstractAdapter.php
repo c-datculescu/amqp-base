@@ -37,7 +37,7 @@ abstract class AbstractAdapter extends AbstractAdapterAware implements AdapterIn
             'bindings'    => [],
             'type'        => 'topic',
         ],
-        'exchanges'  => [
+        'exchange'   => [
             'type'      => 'topic',
             'arguments' => [],
             'passive'   => false,
@@ -75,10 +75,27 @@ abstract class AbstractAdapter extends AbstractAdapterAware implements AdapterIn
     /**
      * Get the config
      *
-     * @return mixed
+     * @param null|string $type Type of config
+     * @param null|string $key  Configuration key
+     *
+     * @return array
      */
-    public function getConfig()
+    public function getConfig($type = null, $key = null)
     {
-        return $this->config;
+        if (null === $type || null === $key) {
+            return $this->config;
+        }
+
+        if (!isset($this->config[$type . 's'])) {
+            return null;
+        }
+
+        $config = $this->config[$type . 's'];
+
+        if (!isset($config[$key])) {
+            return false;
+        }
+
+        return array_merge_recursive($this->defaultConfig[$type], $config[$key]);
     }
 }

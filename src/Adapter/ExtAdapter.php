@@ -2,11 +2,7 @@
 
 namespace Amqp\Adapter;
 
-use Amqp\Exception;
-use Amqp\Exception\ChannelException;
-use Amqp\Exception\ConnectionException;
-use Amqp\Exception\ExchangeException;
-use Amqp\Exception\QueueException;
+use Amqp\Adapter\ExtAdapter\Helper;
 use Amqp\Message;
 use Amqp\Message\MessageInterface;
 
@@ -31,18 +27,8 @@ class ExtAdapter extends AbstractAdapter
     protected $queues = [];
 
     /**
-     * Default connection config values
-     * @var array
-     */
-    protected $defaultConfig = [
-        'host'            => 'localhost',
-        'port'            => 5672,
-        'vhost'           => '/',
-        'connect_timeout' => 30
-    ];
-
-    /**
      * @inheritdoc
+     * @todo Add more message properties
      */
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
     {
@@ -52,23 +38,24 @@ class ExtAdapter extends AbstractAdapter
 
             return $this->getExchange($exchangeName)->publish($message->getPayload(), $routingKey, AMQP_NOPARAM, $props);
         } catch (\Exception $e) {
-            throw $this->convertException($e);
+            throw Helper\Exception::convert($e);
         }
     }
 
     /**
      * @inheritdoc
+     * @todo Implement multi acknowledge
      */
     public function listen($queue, callable $callback, array $options = [])
     {
+        $options = array_merge($this->defaultConfig['listener'], $options);
         try {
             $queue = $this->getQueue($queue);
             $queue->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback, $queue) {
                 $result = new Message\Result();
-                call_user_func($callback, $this->convertMessage($envelope), $result);
+                call_user_func($callback, Helper\Message::convert($envelope), $result);
 
                 if ($result->getStatus()) {
-                    // TODO: Multi
                     $queue->ack($envelope->getDeliveryTag());
                 } else {
                     $queue->nack($envelope->getDeliveryTag(), $result->isRequeue() ? AMQP_REQUEUE : AMQP_NOPARAM);
@@ -77,85 +64,10 @@ class ExtAdapter extends AbstractAdapter
                 if ($result->isStop()) {
                     return false;
                 }
-            }, $this), $this->getListenFlags($options));
+            }, $this), Helper\Options::toFlags($options));
         } catch (\Exception $e) {
-            throw $this->convertException($e);
+            throw Helper\Exception::convert($e);
         }
-    }
-
-    /**
-     * Get listen flags
-     *
-     * @param array $options The queue options
-     *
-     * @return int
-     */
-    protected function getListenFlags(array $options = [])
-    {
-        return $this->convertOptionsToFlags([
-            'auto_ack' => AMQP_AUTOACK
-        ], $options);
-    }
-
-    protected function getQueueFlags(array $options = [])
-    {
-        return $this->convertOptionsToFlags([
-            'durable'    => AMQP_DURABLE,
-            'passive'    => AMQP_PASSIVE,
-            'exclusive'  => AMQP_EXCLUSIVE,
-            'autodelete' => AMQP_AUTODELETE
-        ], array_combine($options, array_fill(0, count($options), true)));
-    }
-
-    protected function getExchangeFlags(array $options = [])
-    {
-        return $this->convertOptionsToFlags([
-            'durable'    => AMQP_DURABLE,
-            'passive'    => AMQP_PASSIVE,
-        ], array_combine($options, array_fill(0, count($options), true)));
-    }
-
-    /**
-     * @param array $map
-     * @param array $options
-     *
-     * @return number
-     */
-    protected function convertOptionsToFlags($map = [], array $options = [])
-    {
-        return array_sum(array_values(array_intersect_key($map, array_filter($options))));
-    }
-
-    /**
-     * Convert AMQP Envelope to internal message format
-     *
-     * @param \AMQPEnvelope $envelope The envelope
-     *
-     * @return Message
-     */
-    protected function convertMessage(\AMQPEnvelope $envelope) {
-        $message = new Message();
-        $message->setPayload($envelope->getBody())
-            ->setDeliveryMode($envelope->getDeliveryMode())
-            ->setHeaders($envelope->getHeaders())
-            ->setProperties([
-                'content_type'     => $envelope->getContentType(),
-                'content_encoding' => $envelope->getContentEncoding(),
-                'app_id'           => $envelope->getAppId(),
-                'correlation_id'   => $envelope->getCorrelationId(),
-                'delivery_tag'     => $envelope->getDeliveryTag(),
-                'message_id'       => $envelope->getMessageId(),
-                'priority'         => $envelope->getPriority(),
-                'reply_to'         => $envelope->getReplyTo(),
-                'routing_key'      => $envelope->getRoutingKey(),
-                'exchange_name'    => $envelope->getExchangeName(),
-                'timestamp'        => $envelope->getTimeStamp(),
-                'type'             => $envelope->getType(),
-                'user_id'          => $envelope->getUserId()
-            ])
-        ;
-
-        return $message;
     }
 
     /**
@@ -164,7 +76,6 @@ class ExtAdapter extends AbstractAdapter
      * @param string $name The exchange name
      *
      * @return \AMQPExchange
-     * @throws ConnectionException
      */
     protected function getExchange($name)
     {
@@ -172,22 +83,21 @@ class ExtAdapter extends AbstractAdapter
             return $this->exchanges[$name];
         }
 
-        $config = $this->getConfig();
-        if (!isset($config['exchanges'][$name])) {
+        $config = $this->getConfig('exchange', $name);
+        if (null === $config) {
             throw new \InvalidArgumentException("Exchange definition '{$name}' doesn't exists.");
         }
 
-        $exchangeConfig = $config['exchanges'][$name];
-        $connection = $this->getConnection($exchangeConfig['connection']);
+        $connection = $this->getConnection($config['connection']);
         $this->exchanges[$name] = $exchange = new \AMQPExchange($connection['channel']);
 
-        $exchange->setName(is_callable($exchangeConfig['name']) ? call_user_func($exchangeConfig['name']) : $exchangeConfig['name']);
-        $exchange->setType(isset($exchangeConfig['type']) ? $exchangeConfig['type'] : 'topic');
-        $exchange->setFlags($this->getExchangeFlags(isset($exchangeConfig['flags']) ? $exchangeConfig['flags'] : 'durable'));
+        $exchange->setName(is_callable($config['name']) ? call_user_func($config['name']) : $config['name']);
+        $exchange->setType(isset($config['type']) ? $config['type'] : 'topic');
+        $exchange->setFlags(Helper\Options::toFlags($config));
         $exchange->declareExchange();
 
-        if (isset($exchangeConfig['bindings'])) {
-            foreach ($exchangeConfig['bindings'] as $binding) {
+        if (isset($config['bindings'])) {
+            foreach ($config['bindings'] as $binding) {
                 try {
                     $this->getExchange($binding['exchange']);
                 } catch (\InvalidArgumentException $e) {
@@ -198,8 +108,8 @@ class ExtAdapter extends AbstractAdapter
             }
         }
 
-        if (isset($exchangeConfig['attributes'])) {
-            $exchange->setArguments($exchangeConfig['attributes']);
+        if (isset($config['attributes'])) {
+            $exchange->setArguments($config['attributes']);
         }
 
         return $exchange;
@@ -218,19 +128,17 @@ class ExtAdapter extends AbstractAdapter
             return $this->connections[$name];
         }
 
-        $config = $this->getConfig();
-        if (!isset($config['connections'][$name])) {
+        $config = $this->getConfig('connection', $name);
+        if (null == $config) {
             throw new \InvalidArgumentException("Connection '{$name}' doesn't exists.");
         }
 
-        $connectionConfig = $config['connections'][$name];
-
-        $connection = new \AMQPConnection(array_merge($this->defaultConfig, $connectionConfig));
+        $connection = new \AMQPConnection($config);
         $connection->connect();
 
         $channel = new \AMQPChannel($connection);
-        if (isset($connectionConfig['prefetch_count'])) {
-            $channel->setPrefetchCount($connectionConfig['prefetch_count']);
+        if (isset($config['prefetch_count'])) {
+            $channel->setPrefetchCount($config['prefetch_count']);
         }
 
         return $this->connections[$name] = ['connection' => $connection, 'channel' => $channel];
@@ -249,21 +157,20 @@ class ExtAdapter extends AbstractAdapter
             return $this->queues[$name];
         }
 
-        $config = $this->getConfig();
-        if (!isset($config['queues'][$name])) {
+        $config = $this->getConfig('queue', $name);
+        if (null === $config) {
             throw new \InvalidArgumentException("Queue definition '{$name}' doesn't exists.");
         }
 
-        $queueConfig = $config['queues'][$name];
-        $connection = $this->getConnection($queueConfig['connection']);
+        $connection = $this->getConnection($config['connection']);
         $this->queues[$name] = $queue = new \AMQPQueue($connection['channel']);
 
-        $queue->setFlags($this->getQueueFlags(isset($queueConfig['flags']) ? $queueConfig['flags'] : 'durable'));
-        $queue->setName(is_callable($queueConfig['name']) ? call_user_func($queueConfig['name']) : $queueConfig['name']);
+        $queue->setFlags(Helper\Options::toFlags($config));
+        $queue->setName(is_callable($config['name']) ? call_user_func($config['name']) : $config['name']);
         $queue->declareQueue();
 
-        if (isset($queueConfig['bindings'])) {
-            foreach ($queueConfig['bindings'] as $binding) {
+        if (isset($config['bindings'])) {
+            foreach ($config['bindings'] as $binding) {
                 try {
                     $this->getExchange($binding['exchange']);
                 } catch (\InvalidArgumentException $e) {}
@@ -273,41 +180,16 @@ class ExtAdapter extends AbstractAdapter
             }
         }
 
-        if (isset($queueConfig['attributes'])) {
-            if (isset($queueConfig['attributes']['x-dead-letter-exchange'])) {
+        if (isset($config['attributes'])) {
+            if (isset($config['attributes']['x-dead-letter-exchange'])) {
                 try {
-                    $this->getExchange($queueConfig['attributes']['x-dead-letter-exchange']);
+                    $this->getExchange($config['attributes']['x-dead-letter-exchange']);
                 } catch (\InvalidArgumentException $e) {}
             }
 
-            $queue->setArguments($queueConfig['attributes']);
+            $queue->setArguments($config['attributes']);
         }
 
         return $queue;
-    }
-
-    /**
-     * Convert AMQP extension exception to internal exception
-     *
-     * @param \Exception $e
-     *
-     * @return Exception|ChannelException|ConnectionException|ExchangeException|QueueException|\Exception
-     */
-    protected function convertException(\Exception $e)
-    {
-        switch(get_class($e)) {
-            case 'AMQPException':
-                return new Exception($e->getMessage(), $e->getCode(), $e);
-            case 'AMQPConnectionException':
-                return new ConnectionException($e->getMessage(), $e->getCode(), $e);
-            case 'AMQPChannelException':
-                return new ChannelException($e->getMessage(), $e->getCode(), $e);
-            case 'AMQPExchangeException':
-                return new ExchangeException($e->getMessage(), $e->getCode(), $e);
-            case 'AMQPQueueException':
-                return new QueueException($e->getMessage(), $e->getCode(), $e);
-            default:
-                return $e;
-        }
     }
 }

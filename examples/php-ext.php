@@ -20,15 +20,38 @@ for ($i = 0; $i < 10; $i++) {
     $publisher->publish('global', $msg, $routing_keys[rand(0, count($routing_keys) - 1)]);
 }
 
-
 $consumer = new Consumer();
 $consumer->setAdapter($adapter);
-$consumer->listen('debug', function (MessageInterface $msg) {
+
+//$iterator = $adapter->getQueueIterator('debug');
+/**
+ * @var \Amqp\Adapter\Status $status
+ * @var \AMQPEnvelope $message
+ */
+
+//$i = 0;
+//foreach ($iterator as $status => $message) {
+//    print_r($message->getBody());
+//    $status->ack();
+//    echo PHP_EOL;
+//}
+
+//$i = 0;
+$consumer->listen('debug', function (MessageInterface $msg, Amqp\Message\Result $result) use (&$i) {
     print_r([
         'payload'    => $msg->getPayload(),
-        'properties' => $msg->getProperties(),
-        'headers'    => $msg->getHeaders(),
-        'delivery-mode' => $msg->getDeliveryMode()
+//        'properties' => $msg->getProperties(),
+//        'headers'    => $msg->getHeaders(),
+//        'delivery-mode' => $msg->getDeliveryMode()
     ]);
-    echo PHP_EOL;
+
+    $result->ack()->nack()->requeue()->stop();
+    echo 'test' . PHP_EOL;
+
+//    if (++$i == 10) {
+//        return false;
+//    }
 });
+
+
+echo 'Finished' . PHP_EOL;

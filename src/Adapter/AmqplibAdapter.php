@@ -430,7 +430,7 @@ class AmqplibAdapter extends AbstractAdapter
         }
 
         $localConfig = $this->config['exchanges'][$name];
-        $finalExchangeConfig = array_merge($this->defaultConfig['exchanges'], $localConfig);
+        $finalExchangeConfig = array_merge($this->defaultConfig['exchange'], $localConfig);
 
         $this->finalConfig['exchanges'][$name] = $finalExchangeConfig;
 
