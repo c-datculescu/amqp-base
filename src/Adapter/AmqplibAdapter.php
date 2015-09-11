@@ -1,15 +1,14 @@
 <?php
 /**
- * @todo cache for connections
- * @todo getMessage
- * @todo publish
  * @todo implement dynamic naming for queues
  */
 namespace Amqp\Adapter;
 
+use Amqp\Message\Message;
 use Amqp\Message\MessageInterface;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class AmqplibAdapter extends AbstractAdapter
 {
@@ -48,12 +47,80 @@ class AmqplibAdapter extends AbstractAdapter
         'queues'    => array(),
     );
 
-
+    /**
+     * @param string $exchangeName
+     * @param MessageInterface $message
+     * @param null $routingKey
+     * @return void
+     */
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
     {
         $exchangeConfig = $this->exchangeConfig($exchangeName);
 
+        $msg = $this->convertToAMQPMessage($message);
+        //var_dump($msg);die();
         $channel = $this->channel($this->finalConfig['exchanges'][$exchangeName]['connection']);
+        $channel->basic_publish(
+            $msg,
+            $exchangeConfig['name'],
+            $routingKey !== null ? $routingKey : null
+        );
+    }
+
+    /**
+     * @param MessageInterface $message
+     * @return AMQPMessage
+     */
+    protected function convertToAMQPMessage(MessageInterface $message)
+    {
+        $properties = $message->getProperties();
+        $properties['application_headers'] = $message->getHeaders();
+        $properties['delivery_mode'] = $message->getDeliveryMode();
+
+        return new AMQPMessage($message->getPayload(), $properties);
+    }
+
+    /**
+     * @return MessageInterface
+     */
+    protected function convertToMessage(AMQPMessage $amqpMessage)
+    {
+        $properties = array(
+            'content_type',
+            'content_encoding',
+            'app_id',
+            'correlation_id',
+            'delivery_tag',
+            'message_id',
+            'priority',
+            'reply_to',
+            'routing_key',
+            'exchange_name',
+            'timestamp',
+            'type',
+            'user_id'
+        );
+
+        $propertyValues = array_map(
+            function ($propertyName) use ($amqpMessage) {
+                if ($amqpMessage->has($propertyName)) {
+                    return $amqpMessage->get($propertyName);
+                }
+
+                return false;
+            },
+            $properties
+        );
+
+        var_dump($amqpMessage);
+
+        $message = new Message();
+        $message->setPayload($amqpMessage->body)
+            ->setDeliveryMode($amqpMessage->get('delivery_mode'))
+            ->setHeaders($amqpMessage->get('application_headers')->getNativeData())
+            ->setProperties(array_combine($properties, $propertyValues));
+
+        return $message;
     }
 
     /**
@@ -89,7 +156,7 @@ class AmqplibAdapter extends AbstractAdapter
         $this->declareQueue($channel, $queueName);
 
         $internalCallback  = \Closure::bind(function($message) use ($queueName, $channel, $callback, $options, $ackAt) {
-            $return = call_user_func($callback, $message);
+            $return = call_user_func($callback, $this->convertToMessage($message));
             if ($return == true) {
                 if ($ackAt !== 0) {
                     $this->counters[$queueName] += 1;
@@ -189,15 +256,11 @@ class AmqplibAdapter extends AbstractAdapter
         $options = $this->queueConfig($queueName);
 
         // increase dependency counter
+        if (!isset($this->dependenciesCounter['queues'][$queueName])) {
+            $this->dependenciesCounter['queues'][$queueName] = 0;
+        }
         $this->dependenciesCounter['queues'][$queueName] += 1;
 
-        // check for bindings/dependencies
-        foreach ($options['bindings'] as $bind) {
-            $this->declareExchange($channel, $bind['exchange']);
-            $channel->queue_bind($queueName, $bind['exchange'], $bind['routing_key']);
-        }
-
-        // @todo use the config for the parameters of queue_declare
         $result = $channel->queue_declare(
             $queueName,
             $options['passive'],        // $passive
@@ -208,6 +271,12 @@ class AmqplibAdapter extends AbstractAdapter
             $options['arguments'],      // $arguments
             null                        // $ticket
         );
+
+        // check for bindings/dependencies
+        foreach ($options['bindings'] as $bind) {
+            $this->declareExchange($channel, $bind['exchange']);
+            $channel->queue_bind($queueName, $bind['exchange'], $bind['routing_key']);
+        }
 
         // remove the dependency since we reached this step
         unset($this->dependenciesCounter['queues'][$queueName]);
@@ -229,12 +298,17 @@ class AmqplibAdapter extends AbstractAdapter
 
         $options = $this->exchangeConfig($exchangeName);
 
+        if (!isset($this->dependenciesCounter['exchanges'][$exchangeName])) {
+            $this->dependenciesCounter['exchanges'][$exchangeName] = 0;
+        }
         $this->dependenciesCounter['exchanges'][$exchangeName] += 1;
 
         // check for all dependencies
-        foreach ($options['bindings'] as $bind) {
-            $this->declareExchange($channel, $bind['exchange']);
-            $channel->exchange_bind($exchangeName, $bind['exchange'], $bind['routing_key']);
+        if (isset($options['bindings'])) {
+            foreach ($options['bindings'] as $bind) {
+                $this->declareExchange($channel, $bind['exchange']);
+                $channel->exchange_bind($exchangeName, $bind['exchange'], $bind['routing_key']);
+            }
         }
 
         $result = $channel->exchange_declare(
@@ -365,4 +439,21 @@ class AmqplibAdapter extends AbstractAdapter
         return $finalExchangeConfig;
     }
 
+    /**
+     * @param \Exception $e
+     * @return Exception|ChannelException|ConnectionException|ExchangeException|\Exception
+     */
+    protected function convertException(\Exception $e)
+    {
+        switch(get_class($e)) {
+            case 'PhpAmqpLib\Exception\AMQPException':
+                return new Exception($e->getMessage(), $e->getCode(), $e);
+            case 'PhpAmqpLib\Exception\AMQPProtocolConnectionException':
+                return new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            case 'PhpAmqpLib\Exception\AMQPProtocolChannelException':
+                return new ChannelException($e->getMessage(), $e->getCode(), $e);
+            default:
+                return $e;
+        }
+    }
 }
