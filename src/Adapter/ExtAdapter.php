@@ -42,16 +42,6 @@ class ExtAdapter extends AbstractAdapter
     ];
 
     /**
-     * Constructor
-     *
-     * @param array $config Configuration options
-     */
-    public function __construct(array $config = [])
-    {
-        parent::__construct($config);
-    }
-
-    /**
      * @inheritdoc
      */
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
@@ -74,17 +64,24 @@ class ExtAdapter extends AbstractAdapter
         try {
             $queue = $this->getQueue($queue);
             $queue->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback, $queue) {
-                $result = call_user_func_array($callback, [$this->convertMessage($envelope)]);
-                if ($result) {
+                $result = new Message\Result();
+                call_user_func($callback, $this->convertMessage($envelope), $result);
+
+                if ($result->getStatus()) {
+                    // TODO: Multi
                     $queue->ack($envelope->getDeliveryTag());
                 } else {
-                    $queue->nack($envelope->getDeliveryTag());
+                    $queue->nack($envelope->getDeliveryTag(), $result->isRequeue() ? AMQP_REQUEUE : AMQP_NOPARAM);
+                }
+
+                if ($result->isStop()) {
+                    return false;
                 }
             }, $this), $this->getListenFlags($options));
         } catch (\Exception $e) {
             throw $this->convertException($e);
         }
-     }
+    }
 
     /**
      * Get listen flags
@@ -184,6 +181,11 @@ class ExtAdapter extends AbstractAdapter
         $connection = $this->getConnection($exchangeConfig['connection']);
         $this->exchanges[$name] = $exchange = new \AMQPExchange($connection['channel']);
 
+        $exchange->setName(is_callable($exchangeConfig['name']) ? call_user_func($exchangeConfig['name']) : $exchangeConfig['name']);
+        $exchange->setType(isset($exchangeConfig['type']) ? $exchangeConfig['type'] : 'topic');
+        $exchange->setFlags($this->getExchangeFlags(isset($exchangeConfig['flags']) ? $exchangeConfig['flags'] : 'durable'));
+        $exchange->declareExchange();
+
         if (isset($exchangeConfig['bindings'])) {
             foreach ($exchangeConfig['bindings'] as $binding) {
                 try {
@@ -199,11 +201,6 @@ class ExtAdapter extends AbstractAdapter
         if (isset($exchangeConfig['attributes'])) {
             $exchange->setArguments($exchangeConfig['attributes']);
         }
-
-        $exchange->setName(is_callable($exchangeConfig['name']) ? call_user_func($exchangeConfig['name']) : $exchangeConfig['name']);
-        $exchange->setType(isset($exchangeConfig['type']) ? $exchangeConfig['type'] : 'topic');
-        $exchange->setFlags($this->getExchangeFlags(isset($exchangeConfig['flags']) ? $exchangeConfig['flags'] : 'durable'));
-        $exchange->declareExchange();
 
         return $exchange;
     }
@@ -261,6 +258,10 @@ class ExtAdapter extends AbstractAdapter
         $connection = $this->getConnection($queueConfig['connection']);
         $this->queues[$name] = $queue = new \AMQPQueue($connection['channel']);
 
+        $queue->setFlags($this->getQueueFlags(isset($queueConfig['flags']) ? $queueConfig['flags'] : 'durable'));
+        $queue->setName(is_callable($queueConfig['name']) ? call_user_func($queueConfig['name']) : $queueConfig['name']);
+        $queue->declareQueue();
+
         if (isset($queueConfig['bindings'])) {
             foreach ($queueConfig['bindings'] as $binding) {
                 try {
@@ -281,10 +282,6 @@ class ExtAdapter extends AbstractAdapter
 
             $queue->setArguments($queueConfig['attributes']);
         }
-
-        $queue->setFlags($this->getQueueFlags(isset($queueConfig['flags']) ? $queueConfig['flags'] : 'durable'));
-        $queue->setName(is_callable($queueConfig['name']) ? call_user_func($queueConfig['name']) : $queueConfig['name']);
-        $queue->declareQueue();
 
         return $queue;
     }
