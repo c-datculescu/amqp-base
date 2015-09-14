@@ -13,6 +13,7 @@ access only to a set of useful operations on those components.
 * publish - allows publishing on a specific exchange
 
 **What is the point of offering a bridge between the two implementations?**
+
 The reasoning is simple: offer a library that does not necessarily require php-amqp extension or php-amqplib. So the point 
 in the end is *flwexibility*. In the mean time, since the php-amqp extension does not offer support for a few features present
 in some of the brokers (like [RabbitMQ](http://www.rabbitmq.com)) we wanted to give the option to use something that offers
@@ -67,6 +68,50 @@ queue:
 
 ATTENTION: The arguments do not reflect the reality and they depend on the broker implementation. Please look them up in
 your broker specification.
+
+## Configuration default values
+### Connection:
+
+* host - localhost
+* port - 5672
+* vhost - /
+* login - guest
+* password - guest
+* connect_timeout - 0
+* read_timeout - 0
+* write_timeout - 0
+* heartbeat - 10
+* keepalive - true
+* prefetch_count - 3
+
+### Exchange
+
+* name - no default
+* connection - no default
+* durable - true
+* type - topic
+* passive - false
+* arguments - []
+
+### Queue
+
+* name - no default
+* passive - false
+* durable - true
+* exclusive - false
+* auto_delete - false
+* arguments - []
+
+### Publishing properties
+
+* mandatory - false
+* immediate - false
+
+### Listening properties
+
+* consumer_tag - no default
+* multi_ack - false
+* auto_ack - false
 
 ## How to use it
 
