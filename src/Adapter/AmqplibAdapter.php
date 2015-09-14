@@ -9,6 +9,7 @@ use Amqp\Message\MessageInterface;
 use Amqp\Message\Result;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 
@@ -460,6 +461,21 @@ class AmqplibAdapter extends AbstractAdapter
                 return new ChannelException($e->getMessage(), $e->getCode(), $e);
             default:
                 return $e;
+        }
+    }
+
+    public function __destruct()
+    {
+        /** @var AbstractConnection[] $connections */
+        $connections = [];
+        foreach ($this->channels as $channel) {
+            $connection = $channel->getConnection();
+            $connections[spl_object_hash($connection)] = $connection;
+            $channel->close();
+        }
+
+        foreach ($connections as $connection) {
+            $connection->close();
         }
     }
 }
