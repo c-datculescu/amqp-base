@@ -5,6 +5,8 @@
 namespace Amqp\Adapter;
 
 use Amqp\Exception\ConnectionException;
+use Amqp\Exception\ChannelException;
+use Amqp\Exception\ExchangeException;
 use Amqp\Message\Message;
 use Amqp\Message\MessageInterface;
 use Amqp\Message\Result;
@@ -63,10 +65,6 @@ class AmqplibAdapter extends AbstractAdapter
      * @param MessageInterface $message
      * @param null $routingKey
      * @return void
-     * @throws ChannelException
-     * @throws ConnectionException
-     * @throws Exception
-     * @throws ExchangeException
      * @throws \Exception
      */
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
@@ -109,6 +107,8 @@ class AmqplibAdapter extends AbstractAdapter
     }
 
     /**
+     * @param AMQPMessage $amqpMessage The message to convert
+     * 
      * @return MessageInterface
      */
     protected function convertToMessage(AMQPMessage $amqpMessage)
@@ -159,8 +159,6 @@ class AmqplibAdapter extends AbstractAdapter
      * @param array $options     The set of options to pass to the listening [multi_ack => false]
      * @throws ChannelException
      * @throws ConnectionException
-     * @throws Exception
-     * @throws ExchangeException
      * @throws \Exception
      */
     public function listen($queueName, callable $callback, array $options = array())
@@ -483,7 +481,7 @@ class AmqplibAdapter extends AbstractAdapter
 
     /**
      * @param \Exception $e
-     * @return Exception|ChannelException|ConnectionException|ExchangeException|\Exception
+     * @return \Exception|ChannelException|ConnectionException|ExchangeException|\Exception
      */
     protected function convertException(\Exception $e)
     {
