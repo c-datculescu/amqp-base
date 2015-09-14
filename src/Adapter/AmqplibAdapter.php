@@ -6,6 +6,7 @@ namespace Amqp\Adapter;
 
 use Amqp\Message\Message;
 use Amqp\Message\MessageInterface;
+use Amqp\Message\Result;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -30,6 +31,13 @@ class AmqplibAdapter extends AbstractAdapter
      * @var AMQPChannel[]
      */
     protected $channels = array();
+
+    /**
+     * Store the exchange names which should be present
+     *
+     * @var array
+     */
+    protected $exchanges = array();
 
     /**
      * The current message counters
@@ -57,7 +65,8 @@ class AmqplibAdapter extends AbstractAdapter
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
     {
         $exchangeConfig = $this->exchangeConfig($exchangeName);
-        $channel = $this->channel($this->finalConfig['exchanges'][$exchangeName]['connection']);
+        $channel = $this->channel($exchangeConfig['connection']);
+
         $this->declareExchange($channel, $exchangeName);
 
         $channel->basic_publish(
@@ -113,10 +122,12 @@ class AmqplibAdapter extends AbstractAdapter
             $properties
         );
 
+        $headers = $amqpMessage->has('application_headers') ? $amqpMessage->get('application_headers')->getNativeData() : array();
+
         $message = new Message();
         $message->setPayload($amqpMessage->body)
             ->setDeliveryMode($amqpMessage->get('delivery_mode'))
-            ->setHeaders($amqpMessage->get('application_headers')->getNativeData())
+            ->setHeaders($headers)
             ->setProperties(array_combine($properties, $propertyValues));
 
         return $message;
@@ -131,6 +142,7 @@ class AmqplibAdapter extends AbstractAdapter
      */
     public function listen($queueName, callable $callback, array $options = array())
     {
+        $stop = false;
         $options = array_merge($this->defaultConfig['listener'], $options);
 
         // set the global counter
@@ -154,9 +166,11 @@ class AmqplibAdapter extends AbstractAdapter
         // declare the queue
         $this->declareQueue($channel, $queueName);
 
-        $internalCallback  = \Closure::bind(function($message) use ($queueName, $channel, $callback, $options, $ackAt) {
-            $return = call_user_func($callback, $this->convertToMessage($message));
-            if ($return == true) {
+        $internalCallback  = \Closure::bind(function($message) use ($queueName, $channel, $callback, $options, $ackAt, &$stop) {
+            $result = new Result();
+            call_user_func($callback, $this->convertToMessage($message), $result);
+
+            if ($result->getStatus()) {
                 if ($ackAt !== 0) {
                     $this->counters[$queueName] += 1;
                     if ($this->counters[$queueName] == $ackAt) {
@@ -171,10 +185,10 @@ class AmqplibAdapter extends AbstractAdapter
                     }
                 }
             } else {
-                $channel->basic_nack($message->delivery_info['delivery_tag']);
+                $channel->basic_nack($message->delivery_info['delivery_tag'], false, $result->isRequeue());
             }
 
-            return true;
+            $stop = $result->isStop();
         }, $this);
 
         $channel->basic_consume(
@@ -189,7 +203,7 @@ class AmqplibAdapter extends AbstractAdapter
             $queueConfig['arguments']   // $arguments
         );
 
-        while (count($channel->callbacks)) {
+        while (!$stop) {
             $channel->wait();
         }
     }
@@ -259,7 +273,7 @@ class AmqplibAdapter extends AbstractAdapter
             $this->dependenciesCounter['queues'][$queueName] = 0;
         }
         $this->dependenciesCounter['queues'][$queueName] += 1;
-        $channel->queue_declare();
+
         $result = $channel->queue_declare(
             $options['name'],
             $options['passive'],        // $passive
@@ -293,9 +307,12 @@ class AmqplibAdapter extends AbstractAdapter
      */
     protected function declareExchange(AMQPChannel $channel, $exchangeName)
     {
-        $this->detectCircularDependencies('exchange', $exchangeName);
+        if (isset($this->exchanges[$exchangeName])) {
+            return;
+        }
 
         $options = $this->exchangeConfig($exchangeName);
+        $this->detectCircularDependencies('exchange', $exchangeName);
 
         if (!isset($this->dependenciesCounter['exchanges'][$exchangeName])) {
             $this->dependenciesCounter['exchanges'][$exchangeName] = 0;
@@ -321,6 +338,8 @@ class AmqplibAdapter extends AbstractAdapter
             $options['arguments'],  // $arguments
             null                    // $ticket
         );
+
+        $this->exchanges[$exchangeName] = true;
 
         unset($this->dependenciesCounter['exchanges'][$exchangeName]);
         return $result;
@@ -368,7 +387,6 @@ class AmqplibAdapter extends AbstractAdapter
             $localConfig['read_write_timeout'] = min($localConfig['read_timeout'], $localConfig['write_timeout']);
         }
 
-
         $config = array_merge($this->defaultConfig['connection'], $localConfig);
 
         $rwt = $config['read_write_timeout'];
@@ -403,12 +421,7 @@ class AmqplibAdapter extends AbstractAdapter
             throw new \InvalidArgumentException("Queue '{$name}' doesn't exists.");
         }
 
-        $localConfig = $this->config['queues'][$name];
-        $finalQueueConfig = array_merge($this->defaultConfig['queue'], $localConfig);
-
-        $this->finalConfig['queues'][$name] = $finalQueueConfig;
-
-        return $finalQueueConfig;
+        return $this->finalConfig['queues'][$name] = $this->getConfig('queue', $name);
     }
 
     /**
@@ -429,12 +442,7 @@ class AmqplibAdapter extends AbstractAdapter
             throw new \InvalidArgumentException("Exchange '{$name}' doesn't exists.");
         }
 
-        $localConfig = $this->config['exchanges'][$name];
-        $finalExchangeConfig = array_merge($this->defaultConfig['exchange'], $localConfig);
-
-        $this->finalConfig['exchanges'][$name] = $finalExchangeConfig;
-
-        return $finalExchangeConfig;
+        return $this->finalConfig['exchanges'][$name] = $this->getConfig('exchange', $name);
     }
 
     /**
