@@ -11,6 +11,12 @@ access only to a set of useful operations on those components.
 
 * listen - allows blocking listening on a specified queue
 * publish - allows publishing on a specific exchange
+
+**What is the point of offering a bridge between the two implementations?**
+The reasoning is simple: offer a library that does not necessarily require php-amqp extension or php-amqplib. So the point 
+in the end is *flwexibility*. In the mean time, since the php-amqp extension does not offer support for a few features present
+in some of the brokers (like [RabbitMQ](http://www.rabbitmq.com)) we wanted to give the option to use something that offers
+this support.
     
 ## Configuration
 
