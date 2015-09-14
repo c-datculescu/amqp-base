@@ -18,6 +18,11 @@ The reasoning is simple: offer a library that does not necessarily require php-a
 in the end is *flwexibility*. In the mean time, since the php-amqp extension does not offer support for a few features present
 in some of the brokers (like [RabbitMQ](http://www.rabbitmq.com)) we wanted to give the option to use something that offers
 this support.
+
+## TODO
+
+* implement options for publishing messages (immediate and mandatory)
+* implement basic examples for most of the patterns showcased on the rabbitmq website
     
 ## Configuration
 
