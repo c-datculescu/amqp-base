@@ -24,7 +24,7 @@ class Result
 
     public function requeue()
     {
-        $this->status = false;
+        $this->requeue = true;
         return $this;
     }
 

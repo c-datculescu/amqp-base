@@ -45,9 +45,10 @@ connections:
         connect_timeout: 0
         read_timeout: 0
         write_timeout: 0
-        heartbeat: 10           # option is only available for php-amqplib and php-amqp >=1.6beta3
-        keepalive: true         # this option is available only for php-amqplib
-        prefetch_count: 3       # available in the connection level although is a channel option
+        heartbeat: 10               # option is only available for php-amqplib and php-amqp >=1.6beta3
+        keepalive: true             # this option is available only for php-amqplib
+        prefetch_count: 3           # available in the connection level although is a channel option
+        publisher_confirms: false   # publisher waits for ack
 
 exchange:
     global:
@@ -88,6 +89,7 @@ your broker specification.
 * heartbeat - 10
 * keepalive - true
 * prefetch_count - 3
+* publisher_confirms - false
 
 ### Exchange
 
@@ -125,29 +127,32 @@ The configuration:
 $config = [
               'connections' => [
                   'main' => [
-                      'host'     => '192.168.56.52',
-                      'port'     => 5672,
-                      'login'    => 'admin',
-                      'password' => 'mort487',
-                      'vhost'    => '/'
+                      'host'                => '192.168.56.52',
+                      'port'                => 5672,
+                      'login'               => 'admin',
+                      'password'            => 'mort487',
+                      'vhost'               => '/',
                   ],
               ],
               'exchanges'   => [
                   'global' => [
-                      'name'       => 'global',
-                      'connection' => 'main',
-                      'flags'      => ['durable'],
-                      'type'       => 'topic'
+                      'name'        => 'global',
+                      'connection'  => 'main',
+                      'durable'     => true,
+                      'type'        => 'topic'
+                      'passive'     => false,
                   ]
               ],
               'queues' => [
                   'debug' => [
-                      'name' => 'debug',
-                      'flags' => ['durable'],
-                      'connection' => 'main',
-                      'bindings' => [
+                      'name'        => 'debug',
+                      'passive'     => false,
+                      'durable'     => true,
+                      'exclusive'   => false,
+                      'auto_delete' => false,
+                      'bindings'    => [
                           ['exchange' => 'global', 'routing_key' => '#'],
-                          ['exchange' => 'global', 'routing_key' => '']
+                          ['exchange' => 'global', 'routing_key' => ''],
                       ]
                   ]
               ]
@@ -169,7 +174,7 @@ $msg->setHeaders(['x-foo' =>'sfgsd']);
 $adapter->publish('global', $msg);
 $adapter->listen(
     'debug',
-    function ($msg) {
+    function (MessageInterface $msg, Amqp\Message\Result $result) {
         var_dump($msg);
     }
 );

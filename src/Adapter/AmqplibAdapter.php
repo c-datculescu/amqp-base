@@ -4,6 +4,7 @@
  */
 namespace Amqp\Adapter;
 
+use Amqp\Exception\ConnectionException;
 use Amqp\Message\Message;
 use Amqp\Message\MessageInterface;
 use Amqp\Message\Result;
@@ -62,19 +63,35 @@ class AmqplibAdapter extends AbstractAdapter
      * @param MessageInterface $message
      * @param null $routingKey
      * @return void
+     * @throws ChannelException
+     * @throws ConnectionException
+     * @throws Exception
+     * @throws ExchangeException
+     * @throws \Exception
      */
     public function publish($exchangeName, MessageInterface $message, $routingKey = null)
     {
-        $exchangeConfig = $this->exchangeConfig($exchangeName);
-        $channel = $this->channel($exchangeConfig['connection']);
+        try {
+            $exchangeConfig = $this->exchangeConfig($exchangeName);
+            $connectionName = $exchangeConfig['connection'];
+            $channel = $this->channel($connectionName);
 
-        $this->declareExchange($channel, $exchangeName);
+            $this->declareExchange($channel, $exchangeName);
 
-        $channel->basic_publish(
-            $this->convertToAMQPMessage($message),
-            $exchangeConfig['name'],
-            $routingKey !== null ? $routingKey : null
-        );
+
+            $channel->basic_publish(
+                $this->convertToAMQPMessage($message),
+                $exchangeConfig['name'],
+                $routingKey !== null ? $routingKey : null
+            );
+
+            if ($this->finalConfig['connections'][$connectionName]['publisher_confirms']) {
+                $channel->wait_for_pending_acks_returns();
+            }
+
+        } catch (\Exception $e) {
+            throw $this->convertException($e);
+        }
     }
 
     /**
@@ -140,72 +157,82 @@ class AmqplibAdapter extends AbstractAdapter
      * @param string $queueName  The name of the queue to be used
      * @param callable $callback The callback from userland to be used. Accepts one parameter, message
      * @param array $options     The set of options to pass to the listening [multi_ack => false]
+     * @throws ChannelException
+     * @throws ConnectionException
+     * @throws Exception
+     * @throws ExchangeException
+     * @throws \Exception
      */
     public function listen($queueName, callable $callback, array $options = array())
     {
-        $stop = false;
-        $options = array_merge($this->defaultConfig['listener'], $options);
+        try {
+            $stop = false;
+            $options = array_merge($this->defaultConfig['listener'], $options);
 
-        // set the global counter
-        $this->counters[$queueName] = 0;
+            // set the global counter
+            $this->counters[$queueName] = 0;
 
-        $queueConfig = $this->queueConfig($queueName);
+            $queueConfig = $this->queueConfig($queueName);
 
-        if ($options['multi_ack'] == true) {
-            // acknowledge at prefetch_count / 2 if prefetch count is set
-            $connectionName = $this->finalConfig['queues'][$queueName]['connection'];
-            $properties = $this->connectionConfig($connectionName);
+            if ($options['multi_ack'] == true) {
+                // acknowledge at prefetch_count / 2 if prefetch count is set
+                $connectionName = $this->finalConfig['queues'][$queueName]['connection'];
+                $properties = $this->connectionConfig($connectionName);
 
-            // force acknowledgements at ceil of quality of service (channel property)
-            $ackAt = ceil($properties['prefetch_count'] / 2);
-        } else {
-            $ackAt = 0;
-        }
-
-        $channel = $this->channel($this->finalConfig['queues'][$queueName]['connection']);
-
-        // declare the queue
-        $this->declareQueue($channel, $queueName);
-
-        $internalCallback  = \Closure::bind(function($message) use ($queueName, $channel, $callback, $options, $ackAt, &$stop) {
-            $result = new Result();
-            call_user_func($callback, $this->convertToMessage($message), $result);
-
-            if ($result->getStatus()) {
-                if ($ackAt !== 0) {
-                    $this->counters[$queueName] += 1;
-                    if ($this->counters[$queueName] == $ackAt) {
-                        // multiple acknowledgements
-                        $channel->basic_ack($message->delivery_info['delivery_tag'], true);
-                        $this->counters[$queueName] = 0;
-                    }
-                } else {
-                    // ack one by one
-                    if (isset($options['auto_ack']) && $options['auto_ack'] == false) {
-                        $channel->basic_ack($message->delivery_info['delivery_tag']);
-                    }
-                }
+                // force acknowledgements at ceil of quality of service (channel property)
+                $ackAt = ceil($properties['prefetch_count'] / 2);
             } else {
-                $channel->basic_nack($message->delivery_info['delivery_tag'], false, $result->isRequeue());
+                $ackAt = 0;
             }
 
-            $stop = $result->isStop();
-        }, $this);
+            $channel = $this->channel($this->finalConfig['queues'][$queueName]['connection']);
 
-        $channel->basic_consume(
-            $queueConfig['name'],       // $queue
-            '',                         // $consumer_tag
-            false,                      // $no_local
-            $options['auto_ack'],       // $no_ack
-            false,      // $exclusive
-            false,                      // $nowait
-            $internalCallback,          // $callback
-            null,                       // $ticket
-            $queueConfig['arguments']   // $arguments
-        );
+            // declare the queue
+            $this->declareQueue($channel, $queueName);
 
-        while (!$stop) {
-            $channel->wait();
+            $internalCallback = \Closure::bind(function ($message) use ($queueName, $channel, $callback, $options, $ackAt, &$stop) {
+                $result = new Result();
+                call_user_func($callback, $this->convertToMessage($message), $result);
+
+                if ($result->getStatus()) {
+                    if ($ackAt !== 0) {
+                        $this->counters[$queueName] += 1;
+                        if ($this->counters[$queueName] == $ackAt) {
+                            // multiple acknowledgements
+                            echo 'aaaa',PHP_EOL;
+                            $channel->basic_ack($message->delivery_info['delivery_tag'], true);
+                            $this->counters[$queueName] = 0;
+                        }
+                    } else {
+                        // ack one by one
+                        if (isset($options['auto_ack']) && $options['auto_ack'] == false) {
+                            $channel->basic_ack($message->delivery_info['delivery_tag']);
+                        }
+                    }
+                } else {
+                    $channel->basic_nack($message->delivery_info['delivery_tag'], false, $result->isRequeue());
+                }
+
+                $stop = $result->isStop();
+            }, $this);
+
+            $channel->basic_consume(
+                $queueConfig['name'],       // $queue
+                '',                         // $consumer_tag
+                false,                      // $no_local
+                $options['auto_ack'],       // $no_ack
+                false,      // $exclusive
+                false,                      // $nowait
+                $internalCallback,          // $callback
+                null,                       // $ticket
+                $queueConfig['arguments']   // $arguments
+            );
+
+            while (!$stop) {
+                $channel->wait();
+            }
+        } catch (\Exception $e) {
+            throw $this->convertException($e);
         }
     }
 
@@ -249,6 +276,10 @@ class AmqplibAdapter extends AbstractAdapter
         // get the channel
         $channel = $connection->channel();
         $channel->basic_qos(0, $config['prefetch_count'], false);
+
+        if ($config['publisher_confirms']) {
+            $channel->confirm_select();
+        }
 
         $this->channels[$name] = $channel;
 
@@ -455,6 +486,7 @@ class AmqplibAdapter extends AbstractAdapter
         switch(get_class($e)) {
             case 'PhpAmqpLib\Exception\AMQPException':
                 return new Exception($e->getMessage(), $e->getCode(), $e);
+            case 'PhpAmqpLib\Exception\AMQPRuntimeException':
             case 'PhpAmqpLib\Exception\AMQPProtocolConnectionException':
                 return new ConnectionException($e->getMessage(), $e->getCode(), $e);
             case 'PhpAmqpLib\Exception\AMQPProtocolChannelException':

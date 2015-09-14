@@ -27,6 +27,7 @@ abstract class AbstractAdapter extends AbstractAdapterAware implements AdapterIn
             'heartbeat'          => 10,
             'keepalive'          => true,
             'prefetch_count'     => 3,
+            'publisher_confirms' => false,
         ],
         'queue'      => [
             'arguments'   => [],
