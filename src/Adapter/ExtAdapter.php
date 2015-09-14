@@ -49,14 +49,24 @@ class ExtAdapter extends AbstractAdapter
     public function listen($queue, callable $callback, array $options = [])
     {
         $options = array_merge($this->defaultConfig['listener'], $options);
+        $connectionConfig = $this->getConfig('connection', $this->config['queues'][$queue]['connection']);
+        $ackAt = isset($options['multi_ack']) ? ceil($connectionConfig['prefetch_count'] / 2) : 0;
+
         try {
             $queue = $this->getQueue($queue);
-            $queue->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback, $queue) {
+            $acknowledged = 0;
+            $queue->consume(\Closure::bind(function (\AMQPEnvelope $envelope) use ($callback, $queue, $ackAt, &$acknowledged) {
                 $result = new Message\Result();
                 call_user_func($callback, Helper\Message::convert($envelope), $result);
 
                 if ($result->getStatus()) {
-                    $queue->ack($envelope->getDeliveryTag());
+                    if ($ackAt > 1) {
+                        if (0 == ++$acknowledged % $ackAt) {
+                            $queue->ack($envelope->getDeliveryTag(), AMQP_MULTIPLE);
+                        }
+                    } else {
+                        $queue->ack($envelope->getDeliveryTag());
+                    }
                 } else {
                     $queue->nack($envelope->getDeliveryTag(), $result->isRequeue() ? AMQP_REQUEUE : AMQP_NOPARAM);
                 }

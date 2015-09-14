@@ -35,6 +35,6 @@ $consumer->listen('debug', function (MessageInterface $msg, Amqp\Message\Result 
     if (++$i == 10) {
         return $result->stop();
     }
-});
+}, ['multi_ack' => true]);
 
 echo '[!] Finished!', PHP_EOL;
