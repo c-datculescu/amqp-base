@@ -16,7 +16,7 @@ class ExtAdapter extends AbstractAdapter
 
     /**
      * Connections instances
-     * @var \AMQPConnection[]
+     * @var array
      */
     protected $connections = [];
 
@@ -44,7 +44,6 @@ class ExtAdapter extends AbstractAdapter
 
     /**
      * @inheritdoc
-     * @todo Implement multi acknowledge
      */
     public function listen($queue, callable $callback, array $options = [])
     {
@@ -201,5 +200,17 @@ class ExtAdapter extends AbstractAdapter
         }
 
         return $queue;
+    }
+
+    /**
+     * Disconnect and clear local objects cache
+     */
+    public function __destruct()
+    {
+        foreach ($this->connections as &$connection) {
+            $connection['connection']->disconnect();
+            unset($connection['connection'], $connection['channel']);
+        }
+        $this->connections = [];
     }
 }
