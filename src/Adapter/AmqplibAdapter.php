@@ -198,7 +198,6 @@ class AmqplibAdapter extends AbstractAdapter
                         $this->counters[$queueName] += 1;
                         if ($this->counters[$queueName] == $ackAt) {
                             // multiple acknowledgements
-                            echo 'aaaa',PHP_EOL;
                             $channel->basic_ack($message->delivery_info['delivery_tag'], true);
                             $this->counters[$queueName] = 0;
                         }

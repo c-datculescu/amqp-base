@@ -19,5 +19,5 @@ $adapter->listen(
         echo $message->getPayload(),PHP_EOL;
         return $result->ack();
     },
-    ['multiple' => true]
+    ['multi_ack' => true] // will acknowledge after every 5 message (prefetch_count/2)
 );
