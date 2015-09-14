@@ -6,6 +6,7 @@ namespace Amqp\Adapter;
 
 use Amqp\Exception\ConnectionException;
 use Amqp\Exception\ChannelException;
+use Amqp\Exception;
 use Amqp\Exception\ExchangeException;
 use Amqp\Message\Message;
 use Amqp\Message\MessageInterface;
@@ -108,7 +109,7 @@ class AmqplibAdapter extends AbstractAdapter
 
     /**
      * @param AMQPMessage $amqpMessage The message to convert
-     * 
+     *
      * @return MessageInterface
      */
     protected function convertToMessage(AMQPMessage $amqpMessage)
