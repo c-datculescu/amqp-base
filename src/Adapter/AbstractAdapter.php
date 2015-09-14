@@ -96,6 +96,6 @@ abstract class AbstractAdapter extends AbstractAdapterAware implements AdapterIn
             return false;
         }
 
-        return array_merge_recursive($this->defaultConfig[$type], $config[$key]);
+        return array_merge($this->defaultConfig[$type], $config[$key]);
     }
 }
