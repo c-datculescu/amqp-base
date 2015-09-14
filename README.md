@@ -2,21 +2,24 @@
 
 Small library that intends to abstract common AMQP usages. Also provides integration and interoperability between the
 two major amqp implementations available in php:
-    * [php-amqp extension](https://github.com/pdezwart/php-amqp) - very fast and lightweight, but lacking some of the features
-    * [php-amqplib library](https://github.com/videlalvaro/php-amqplib) - binary amqp protocol implementation in php
+
+* [php-amqp extension](https://github.com/pdezwart/php-amqp) - very fast and lightweight, but lacking some of the features
+* [php-amqplib library](https://github.com/videlalvaro/php-amqplib) - binary amqp protocol implementation in php
     
 The current implementation abstracts the lower level components like queues, exchanges, channels and connections, allowing
 access only to a set of useful operations on those components.
-    * listen - allows blocking listening on a specified queue
-    * publish - allows publishing on a specific exchange
+
+* listen - allows blocking listening on a specified queue
+* publish - allows publishing on a specific exchange
     
 ## Configuration
 
 The configuration needed for the library allows you to define most of your infrastructure in one go, automatically detecting
 dependencies between various components. The dependency detection is based on:
-    * bindings - queue to exchange and exchange to exchange
-    * alternate-exchange argument - during exchange declaration
-    * dead-letter-exchange argument - during queue declaration
+
+* bindings - queue to exchange and exchange to exchange
+* alternate-exchange argument - during exchange declaration
+* dead-letter-exchange argument - during queue declaration
     
 Full set of configuration options are present below:
 ```yaml
