@@ -340,7 +340,7 @@ class AmqplibAdapter extends AbstractAdapter
     protected function declareExchange(AMQPChannel $channel, $exchangeName)
     {
         if (isset($this->exchanges[$exchangeName])) {
-            return;
+            return false;
         }
 
         $options = $this->exchangeConfig($exchangeName);
@@ -357,6 +357,10 @@ class AmqplibAdapter extends AbstractAdapter
                 $this->declareExchange($channel, $bind['exchange']);
                 $channel->exchange_bind($exchangeName, $bind['exchange'], $bind['routing_key']);
             }
+        }
+
+        if (isset($options['alternate_exchange'])) {
+            $this->declareExchange($channel, $options['alternate_exchange']);
         }
 
         $result = $channel->exchange_declare(
