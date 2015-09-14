@@ -9,6 +9,4 @@ $msg->setDeliveryMode(2);
 $msg->setHeaders(['x-foo' =>'sfgsd']);
 $msg->setPayload(uniqid());
 
-while(true) {
-    $adapter->publish('global', $msg);
-}
+$adapter->publish('global', $msg);

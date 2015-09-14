@@ -4,17 +4,13 @@
  */
 namespace Amqp\Adapter;
 
-use Amqp\Exception\ConnectionException;
-use Amqp\Exception\ChannelException;
-use Amqp\Exception;
-use Amqp\Exception\ExchangeException;
-use Amqp\Message\Message;
+use Amqp\Adapter\Amqplib\Helper\Exception as ExceptionHelper;
 use Amqp\Message\MessageInterface;
 use Amqp\Message\Result;
+use Amqp\Adapter\Amqplib\Helper\Message as MessageHelper;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Connection\AbstractConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 
 class AmqplibAdapter extends AbstractAdapter
@@ -27,6 +23,7 @@ class AmqplibAdapter extends AbstractAdapter
      */
     protected $finalConfig = array(
         'connections' => array(),
+        'exchanges' => array(),
         'queues' => array(),
     );
 
@@ -79,7 +76,7 @@ class AmqplibAdapter extends AbstractAdapter
 
 
             $channel->basic_publish(
-                $this->convertToAMQPMessage($message),
+                MessageHelper::toAMQPMessage($message),
                 $exchangeConfig['name'],
                 $routingKey !== null ? $routingKey : null
             );
@@ -89,67 +86,8 @@ class AmqplibAdapter extends AbstractAdapter
             }
 
         } catch (\Exception $e) {
-            throw $this->convertException($e);
+            throw ExceptionHelper::convert($e);
         }
-    }
-
-    /**
-     * @param MessageInterface $message
-     * @return AMQPMessage
-     */
-    protected function convertToAMQPMessage(MessageInterface $message)
-    {
-        $deliveryMode = $message->getDeliveryMode();
-        $properties = $message->getProperties();
-        $properties['application_headers'] = new AMQPTable($message->getHeaders());
-        $properties['delivery_mode'] =  $deliveryMode ?: 2; // default: durable
-
-        return new AMQPMessage($message->getPayload(), $properties);
-    }
-
-    /**
-     * @param AMQPMessage $amqpMessage The message to convert
-     *
-     * @return MessageInterface
-     */
-    protected function convertToMessage(AMQPMessage $amqpMessage)
-    {
-        $properties = array(
-            'content_type',
-            'content_encoding',
-            'app_id',
-            'correlation_id',
-            'delivery_tag',
-            'message_id',
-            'priority',
-            'reply_to',
-            'routing_key',
-            'exchange_name',
-            'timestamp',
-            'type',
-            'user_id'
-        );
-
-        $propertyValues = array_map(
-            function ($propertyName) use ($amqpMessage) {
-                if ($amqpMessage->has($propertyName)) {
-                    return $amqpMessage->get($propertyName);
-                }
-
-                return false;
-            },
-            $properties
-        );
-
-        $headers = $amqpMessage->has('application_headers') ? $amqpMessage->get('application_headers')->getNativeData() : array();
-
-        $message = new Message();
-        $message->setPayload($amqpMessage->body)
-            ->setDeliveryMode($amqpMessage->get('delivery_mode'))
-            ->setHeaders($headers)
-            ->setProperties(array_combine($properties, $propertyValues));
-
-        return $message;
     }
 
     /**
@@ -167,10 +105,6 @@ class AmqplibAdapter extends AbstractAdapter
         try {
             $stop = false;
             $options = array_merge($this->defaultConfig['listener'], $options);
-
-            // set the global counter
-            $this->counters[$queueName] = 0;
-
             $queueConfig = $this->queueConfig($queueName);
 
             if ($options['multi_ack'] == true) {
@@ -179,33 +113,29 @@ class AmqplibAdapter extends AbstractAdapter
                 $properties = $this->connectionConfig($connectionName);
 
                 // force acknowledgements at ceil of quality of service (channel property)
-                $ackAt = ceil($properties['prefetch_count'] / 2);
+                $ackAt = (int) ceil($properties['prefetch_count'] / 2);
             } else {
                 $ackAt = 0;
             }
 
             $channel = $this->channel($this->finalConfig['queues'][$queueName]['connection']);
-
-            // declare the queue
             $this->declareQueue($channel, $queueName);
 
-            $internalCallback = \Closure::bind(function ($message) use ($queueName, $channel, $callback, $options, $ackAt, &$stop) {
+            $this->counters[spl_object_hash($channel)] = 0;
+            $internalCallback = \Closure::bind(function ($message) use ($channel, $callback, $options, $ackAt, &$stop) {
                 $result = new Result();
-                call_user_func($callback, $this->convertToMessage($message), $result);
+                call_user_func($callback, MessageHelper::toMessage($message), $result);
 
+                echo $this->counters[spl_object_hash($channel)],PHP_EOL;
                 if ($result->getStatus()) {
                     if ($ackAt !== 0) {
-                        $this->counters[$queueName] += 1;
-                        if ($this->counters[$queueName] == $ackAt) {
+                        if (++$this->counters[spl_object_hash($channel)] === $ackAt) {
                             // multiple acknowledgements
                             $channel->basic_ack($message->delivery_info['delivery_tag'], true);
-                            $this->counters[$queueName] = 0;
+                            $this->counters[spl_object_hash($channel)] = 0;
                         }
-                    } else {
-                        // ack one by one
-                        if (isset($options['auto_ack']) && $options['auto_ack'] == false) {
-                            $channel->basic_ack($message->delivery_info['delivery_tag']);
-                        }
+                    } elseif ($options['auto_ack'] === false) {
+                        $channel->basic_ack($message->delivery_info['delivery_tag']);
                     }
                 } else {
                     $channel->basic_nack($message->delivery_info['delivery_tag'], false, $result->isRequeue());
@@ -215,22 +145,22 @@ class AmqplibAdapter extends AbstractAdapter
             }, $this);
 
             $channel->basic_consume(
-                $queueConfig['name'],       // $queue
-                '',                         // $consumer_tag
-                false,                      // $no_local
-                $options['auto_ack'],       // $no_ack
-                false,      // $exclusive
-                false,                      // $nowait
-                $internalCallback,          // $callback
-                null,                       // $ticket
-                $queueConfig['arguments']   // $arguments
+                $queueConfig['name'],                       // $queue
+                '',                                         // $consumer_tag
+                false,                                      // $no_local
+                $options['auto_ack'],                       // $no_ack
+                false,                                      // $exclusive
+                false,                                      // $nowait
+                $internalCallback,                          // $callback
+                null,                                       // $ticket
+                new AMQPTable($queueConfig['arguments'])    // $arguments
             );
 
             while (!$stop) {
                 $channel->wait();
             }
         } catch (\Exception $e) {
-            throw $this->convertException($e);
+            throw ExceptionHelper::convert($e);
         }
     }
 
@@ -306,19 +236,20 @@ class AmqplibAdapter extends AbstractAdapter
 
         $result = $channel->queue_declare(
             $options['name'],
-            $options['passive'],        // $passive
-            $options['durable'],        // $durable
-            $options['exclusive'],      // $exclusive
-            $options['auto_delete'],    // $auto_delete
-            false,                      // $nowait
-            $options['arguments'],      // $arguments
-            null                        // $ticket
+            $options['passive'],                    // $passive
+            $options['durable'],                    // $durable
+            $options['exclusive'],                  // $exclusive
+            $options['auto_delete'],                // $auto_delete
+            false,                                  // $nowait
+            new AMQPTable($options['arguments']),   // $arguments
+            null                                    // $ticket
         );
 
         // check for bindings/dependencies
         foreach ($options['bindings'] as $bind) {
             $this->declareExchange($channel, $bind['exchange']);
-            $channel->queue_bind($options['name'], $bind['exchange'], $bind['routing_key']);
+            $exchangeName = $this->finalConfig['exchanges'][$bind['exchange']]['name'];
+            $channel->queue_bind($options['name'], $exchangeName, $bind['routing_key']);
         }
 
         // remove the dependency since we reached this step
@@ -353,48 +284,33 @@ class AmqplibAdapter extends AbstractAdapter
         if (isset($options['bindings'])) {
             foreach ($options['bindings'] as $bind) {
                 $this->declareExchange($channel, $bind['exchange']);
-                $channel->exchange_bind($exchangeName, $bind['exchange'], $bind['routing_key']);
+                $sourceName = $this->finalConfig['exchanges'][$bind['exchange']]['name'];
+                $channel->exchange_bind($exchangeName, $sourceName, $bind['routing_key']);
             }
         }
 
-        if (isset($options['alternate_exchange'])) {
-            $this->declareExchange($channel, $options['alternate_exchange']);
+        if (isset($options['arguments']['alternate-exchange'])) {
+            $alternateExchange = $options['arguments']['alternate-exchange'];
+            $this->declareExchange($channel, $alternateExchange);
+            $options['arguments']['alternate-exchange'] = $this->finalConfig['exchanges'][$alternateExchange]['name'];
         }
 
         $result = $channel->exchange_declare(
-            $exchangeName,          // $name
-            $options['type'],       // $type
-            $options['passive'],    // $passive
-            $options['durable'],    // $durable
-            false,                  // $auto_delete
-            false,                  // $internal
-            false,                  // $nowait
-            $options['arguments'],  // $arguments
-            null                    // $ticket
+            $options['name'],                       // $name
+            $options['type'],                       // $type
+            $options['passive'],                    // $passive
+            $options['durable'],                    // $durable
+            false,                                  // $auto_delete
+            false,                                  // $internal
+            false,                                  // $nowait
+            new AMQPTable($options['arguments']),   // $arguments
+            null                                    // $ticket
         );
 
         $this->exchanges[$exchangeName] = true;
 
         unset($this->dependenciesCounter['exchanges'][$exchangeName]);
         return $result;
-    }
-
-    /**
-     * Attempts to detect circular dependencies in config declarations
-     *
-     * @param string $type Type of the current dependency [queue, exchange]
-     * @param string $name The name of the dependency
-     * @throws \Exception if a cyclic dependency is detected
-     */
-    protected function detectCircularDependencies($type, $name)
-    {
-        if (isset($this->dependenciesCounter[$type][$name])) {
-            if ($this->dependenciesCounter[$type][$name] > 0) {
-                throw new \Exception("Circular dependencies detected!");
-            }
-        } else {
-            $this->dependenciesCounter[$type][$name] = 0;
-        }
     }
 
     /**
@@ -480,21 +396,20 @@ class AmqplibAdapter extends AbstractAdapter
     }
 
     /**
-     * @param \Exception $e
-     * @return \Exception|ChannelException|ConnectionException|ExchangeException|\Exception
+     * Attempts to detect circular dependencies in config declarations
+     *
+     * @param string $type Type of the current dependency [queue, exchange]
+     * @param string $name The name of the dependency
+     * @throws \Exception if a cyclic dependency is detected
      */
-    protected function convertException(\Exception $e)
+    protected function detectCircularDependencies($type, $name)
     {
-        switch(get_class($e)) {
-            case 'PhpAmqpLib\Exception\AMQPException':
-                return new Exception($e->getMessage(), $e->getCode(), $e);
-            case 'PhpAmqpLib\Exception\AMQPRuntimeException':
-            case 'PhpAmqpLib\Exception\AMQPProtocolConnectionException':
-                return new ConnectionException($e->getMessage(), $e->getCode(), $e);
-            case 'PhpAmqpLib\Exception\AMQPProtocolChannelException':
-                return new ChannelException($e->getMessage(), $e->getCode(), $e);
-            default:
-                return $e;
+        if (isset($this->dependenciesCounter[$type][$name])) {
+            if ($this->dependenciesCounter[$type][$name] > 0) {
+                throw new \Exception("Circular dependencies detected!");
+            }
+        } else {
+            $this->dependenciesCounter[$type][$name] = 0;
         }
     }
 
