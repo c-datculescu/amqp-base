@@ -23,8 +23,5 @@
             "Amqp\\": "src/"
         }
     },
-    "minimum-stability": "dev",
-    "require": {
-        "videlalvaro/php-amqplib": "2.5.*"
-    }
+    "minimum-stability": "dev"
 }
