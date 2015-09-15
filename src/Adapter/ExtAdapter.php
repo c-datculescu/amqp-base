@@ -108,8 +108,8 @@ class ExtAdapter extends AbstractAdapter
             }
         }
 
-        if (isset($config['attributes'])) {
-            $exchange->setArguments($config['attributes']);
+        if (isset($config['arguments'])) {
+            $exchange->setArguments($config['arguments']);
         }
 
         return $exchange;
@@ -175,19 +175,20 @@ class ExtAdapter extends AbstractAdapter
                     $this->getExchange($binding['exchange']);
                 } catch (\InvalidArgumentException $e) {}
 
-                $queue->bind($binding['exchange'], $binding['routing_key'],
+                $exchangeConfig = $this->getConfig('exchange', $binding['exchange']);
+                $queue->bind($exchangeConfig['name'], $binding['routing_key'],
                     isset($binding['arguments']) ? $binding['arguments'] : []);
             }
         }
 
-        if (isset($config['attributes'])) {
-            if (isset($config['attributes']['x-dead-letter-exchange'])) {
+        if (isset($config['arguments'])) {
+            if (isset($config['arguments']['x-dead-letter-exchange'])) {
                 try {
-                    $this->getExchange($config['attributes']['x-dead-letter-exchange']);
+                    $this->getExchange($config['arguments']['x-dead-letter-exchange']);
                 } catch (\InvalidArgumentException $e) {}
             }
 
-            $queue->setArguments($config['attributes']);
+            $queue->setArguments($config['arguments']);
         }
 
         return $queue;
