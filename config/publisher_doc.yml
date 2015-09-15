@@ -1,9 +1,0 @@
-publisher:
-  publisher:
-    publisher-test:
-
-      # the exchange on where we would publish
-      exchange:                 test
-
-      # timeout in seconds
-      timeout:                  100000000

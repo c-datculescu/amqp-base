@@ -1,6 +1,0 @@
-Todo:
-1: Implement loggers for various notifications and so on. For example, if a specific binding is ignored because it is
-missing one component, would be interesting to know about it
-2: Generate all the documentation for the project
-3: Implement requeing/signaling mechanism for listeners
-4: Show examples of implementing complex topologies like dead-lettering on cancel

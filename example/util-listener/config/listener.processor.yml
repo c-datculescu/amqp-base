@@ -1,8 +1,0 @@
-# defines a set of processors that we can use in order to grab and process the incoming messages
-services:
-  # define rprocessors
-  processor.test:
-    class: TestProcessor
-
-  processor.dateTime:
-    class: DateTimeProcessor
