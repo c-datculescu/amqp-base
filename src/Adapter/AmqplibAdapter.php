@@ -126,7 +126,6 @@ class AmqplibAdapter extends AbstractAdapter
                 $result = new Result();
                 call_user_func($callback, MessageHelper::toMessage($message), $result);
 
-                echo $this->counters[spl_object_hash($channel)],PHP_EOL;
                 if ($result->getStatus()) {
                     if ($ackAt !== 0) {
                         if (++$this->counters[spl_object_hash($channel)] === $ackAt) {
@@ -233,6 +232,11 @@ class AmqplibAdapter extends AbstractAdapter
             $this->dependenciesCounter['queues'][$queueName] = 0;
         }
         $this->dependenciesCounter['queues'][$queueName] += 1;
+
+        if (isset($options['arguments']['x-dead-letter-exchange'])) {
+            $deadLetterExchange = $options['arguments']['x-dead-letter-exchange'];
+            $this->declareExchange($channel, $deadLetterExchange);
+        }
 
         $result = $channel->queue_declare(
             $options['name'],
