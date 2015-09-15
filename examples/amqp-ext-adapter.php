@@ -14,44 +14,27 @@ $publisher = new Publisher();
 $publisher->setAdapter($adapter);
 $routing_keys = ['foo', 'bar', 'foo.bar', 'bar.foo', null];
 
+echo "[ ] Publishing...", PHP_EOL;
 for ($i = 0; $i < 10; $i++) {
     $msg = new Amqp\Message();
     $msg->setPayload('Message ' . $i);
     $publisher->publish('global', $msg, $routing_keys[rand(0, count($routing_keys) - 1)]);
+    echo '[+] ', $msg->getPayload(), PHP_EOL;
 }
+echo "[!] Published!", PHP_EOL, str_repeat('-', 16), PHP_EOL;
 
 $consumer = new Consumer();
 $consumer->setAdapter($adapter);
 
-//$iterator = $adapter->getQueueIterator('debug');
-/**
- * @var \Amqp\Adapter\Status $status
- * @var \AMQPEnvelope $message
- */
-
-//$i = 0;
-//foreach ($iterator as $status => $message) {
-//    print_r($message->getBody());
-//    $status->ack();
-//    echo PHP_EOL;
-//}
-
-//$i = 0;
+$i = 0;
+echo "[ ] Listening...", PHP_EOL;
 $consumer->listen('debug', function (MessageInterface $msg, Amqp\Message\Result $result) use (&$i) {
-    print_r([
-        'payload'    => $msg->getPayload(),
-//        'properties' => $msg->getProperties(),
-//        'headers'    => $msg->getHeaders(),
-//        'delivery-mode' => $msg->getDeliveryMode()
-    ]);
+    echo "[+] ", $msg->getPayload(), PHP_EOL;
+    $result->ack();
 
-    $result->ack()->nack()->requeue()->stop();
-    echo 'test' . PHP_EOL;
+    if (++$i == 10) {
+        return $result->stop();
+    }
+}, ['multi_ack' => true]);
 
-//    if (++$i == 10) {
-//        return false;
-//    }
-});
-
-
-echo 'Finished' . PHP_EOL;
+echo '[!] Finished!', PHP_EOL;
