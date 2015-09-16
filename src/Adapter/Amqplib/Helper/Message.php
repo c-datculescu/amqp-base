@@ -58,7 +58,7 @@ class Message
 
         $headers = $amqpMessage->has('application_headers') ? $amqpMessage->get('application_headers')->getNativeData() : array();
 
-        $message = new \Amqp\Message\Message();
+        $message = new \Amqp\Message();
         $message->setPayload($amqpMessage->body)
             ->setDeliveryMode($amqpMessage->get('delivery_mode'))
             ->setHeaders($headers)

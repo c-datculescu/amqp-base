@@ -5,7 +5,7 @@ $config = require_once __DIR__ . '/../config.php';
 $adapter = new \Amqp\Adapter\AmqplibAdapter($config);
 
 for ($i = 3; $i--;) {
-    $msg = new \Amqp\Message\Message();
+    $msg = new \Amqp\Message();
     $msg->setDeliveryMode(2);
     $msg->setHeaders(['x-foo' =>'sfgsd']);
     $msg->setPayload(uniqid());
@@ -14,7 +14,7 @@ for ($i = 3; $i--;) {
 }
 
 $counter = 0;
-$adapter->listen('debug', function (\Amqp\Message\Message $message, \Amqp\Message\Result $result) use (&$counter) {
+$adapter->listen('debug', function (\Amqp\Message\MessageInterface $message, \Amqp\Message\Result $result) use (&$counter) {
     echo $message->getPayload(),PHP_EOL;
 
     $result->ack();
