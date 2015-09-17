@@ -16,13 +16,4 @@ class Consumer extends AbstractConsumer
     {
         return $this->adapter->listen($queue, $callback, $options);
     }
-
-    /**
-     * @param string $queue
-     * @return \Amqp\Message\MessageInterface
-     */
-    public function getMessage($queue)
-    {
-        return $this->adapter->getMessage($queue);
-    }
 }
