@@ -116,8 +116,6 @@ class Amqp implements Interfaces\Amqp
         } catch (\Exception $e) {
             $this->attemptedConenctions[$connectionName] += 1;
             if ($this->attemptedConenctions[$connectionName] <= 10) {
-                sleep(1);
-                echo "Trying:" . $this->attemptedConenctions[$connectionName] . " \n";
                 $connection = $this->connection($connectionName);
             } else {
                 throw $e;
