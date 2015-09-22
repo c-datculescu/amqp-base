@@ -8,11 +8,9 @@ $loader      = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader(
 $loader->load('services.yml');
 $container->setParameter('config_path', __DIR__ . '/config');
 
-$publisher = $container->get('publisher.demo');
-
-$message = 'test';
-$publisher->publish($message, "example.test");
-
-$message = 'Current date/time is ' . date('c');
-$publisher->publish($message, "example.dateTime");
-
+while (true) {
+    $builder = $container->get('amqp.builder.factory');
+    $connection = $builder->connection('live');
+    $connection->disconnect();
+    unset($connection);
+}

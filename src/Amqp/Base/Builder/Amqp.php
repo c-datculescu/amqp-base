@@ -42,6 +42,13 @@ class Amqp implements Interfaces\Amqp
     protected $exchanges = array();
 
     /**
+     * @var []
+     */
+    protected $attemptedConenctions = array(
+
+    );
+
+    /**
      * Registers all the unresolved dependencies, looking for dependencies which are cyclic
      * @var array
      */
@@ -63,6 +70,10 @@ class Amqp implements Interfaces\Amqp
      */
     public function connection($connectionName)
     {
+        if (!isset($this->attemptedConenctions[$connectionName])) {
+            $this->attemptedConenctions[$connectionName] = 0;
+        }
+
         if (isset($this->connections[$connectionName])) {
             return $this->connections[$connectionName];
         }
@@ -99,7 +110,19 @@ class Amqp implements Interfaces\Amqp
         $connection->setVhost($configuration['vhost']);
         $connection->setReadTimeout($configuration['readTimeout']);
         $connection->setWriteTimeout($configuration['writeTimeout']);
-        $connection->connect();
+        try {
+            $connection->connect();
+            $this->attemptedConenctions[$connectionName] = 0;
+        } catch (\Exception $e) {
+            $this->attemptedConenctions[$connectionName] += 1;
+            if ($this->attemptedConenctions[$connectionName] <= 10) {
+                sleep(1);
+                echo "Trying:" . $this->attemptedConenctions[$connectionName] . " \n";
+                $connection = $this->connection($connectionName);
+            } else {
+                throw $e;
+            }
+        }
 
         $this->connections[$connectionName] = $connection;
 
