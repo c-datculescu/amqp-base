@@ -46,9 +46,37 @@ class Simple implements Publisher
         if (!isset($properties['delivery_mode'])) {
             $properties['delivery_mode'] = 2;
         }
-
-        $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
+        try {
+            $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
+        } catch (\AMQPException $e) {
+            $this->reconnect($e);
+            $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
+        } catch (\AMQPConnectionException $e) {
+            $this->reconnect($e);
+            $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
+        }
 
         return $response;
+    }
+
+    /**
+     * Attempts to reconnect on a dead connection
+     * Usable for long running processes, where the stale connections get collected
+     * after some time
+     *
+     * @param \AMQPExchange $exchange the exchange which contains the dead connection
+     *
+     * @return void
+     */
+    protected function reconnect(\AMQPExchange $exchange)
+    {
+        $connection = $exchange->getConnection();
+        $channel = $exchange->getChannel();
+
+        $connection->reconnect();
+
+        // since the channel is also dead, need to somehow revive it. This can be
+        // done only by calling the constructor of the channel
+        $channel->__construct($connection);
     }
 }
