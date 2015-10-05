@@ -49,11 +49,8 @@ class Simple implements Publisher
         try {
             $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
         } catch (\AMQPException $e) {
-            $this->reconnect($e);
-            $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
-        } catch (\AMQPConnectionException $e) {
-            $this->reconnect($e);
-            $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
+            $this->reconnect();
+            $response = $this->exchange->publish($message, $routingKey, AMQP_NOPARAM, $properties);
         }
 
         return $response;
@@ -64,14 +61,12 @@ class Simple implements Publisher
      * Usable for long running processes, where the stale connections get collected
      * after some time
      *
-     * @param \AMQPExchange $exchange the exchange which contains the dead connection
-     *
      * @return void
      */
-    protected function reconnect(\AMQPExchange $exchange)
+    protected function reconnect()
     {
-        $connection = $exchange->getConnection();
-        $channel = $exchange->getChannel();
+        $connection = $this->exchange->getConnection();
+        $channel = $this->exchange->getChannel();
 
         $connection->reconnect();
 
