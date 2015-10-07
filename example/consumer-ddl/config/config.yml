@@ -1,0 +1,46 @@
+amqp:
+    connection:
+        consumer:
+            host        : ["localhost"]
+            port        : 5672
+            login       : admin
+            password    : admin
+            vhost       : /
+        publisher:
+            host        : ["localhost"]
+            port        : 5672
+            login       : admin
+            password    : admin
+            vhost       : /
+
+    channel:
+        consumer:
+            connection  : consumer
+        publisher:
+            connection  : publisher
+
+    exchange:
+        publisher:
+            channel: publisher
+            name:
+                name: test-exchange
+                type: constant
+            type: AMQP_EX_TYPE_TOPIC
+        reject:
+            channel: publisher
+            name:
+                name: reject-exchange
+                type: constant
+            type: AMQP_EX_TYPE_TOPIC
+            flags: [AMQP_DURABLE]
+
+    queue:
+        consumer:
+            channel: consumer
+            name:
+                name: test-queue
+                type: constant
+            arguments:
+                dl_exchange: new-exchange
+                dl_routingKey: test
+            flags: [AMQP_DURABLE]

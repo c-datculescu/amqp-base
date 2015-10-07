@@ -36,6 +36,18 @@ class Simple implements Listener
     protected $nackCounter = 0;
 
     /**
+     * This exchange serves as a final rejection point after a message has been processed more than the allowed amount
+     * @var \AMQPExchange
+     */
+    protected $rejectExchange = null;
+
+    /**
+     * This routing key is used with the $rejectExchange to publish the message onto the final error exchange
+     * @var string
+     */
+    protected $rejectRoutingKey = 'rejected';
+
+    /**
      * {@inheritdoc}
      */
     public function setConfiguration(array $configuration)
@@ -88,12 +100,25 @@ class Simple implements Listener
         return $this;
     }
 
+    public function setRejectTarget(\AMQPExchange $exchange, $routingKey = null)
+    {
+        $this->rejectExchange = $exchange;
+        $this->rejectRoutingKey = $routingKey;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function consume(AMQPEnvelope $message)
     {
         $bulkAck = $this->configuration['bulkAck'];
+
+        $allowReprocess = $this->allowReprocess($message);
+        // if reprocess is not allowed, ack the message
+        if ($allowReprocess == false) {
+            $this->queue->ack($message->getDeliveryTag());
+            return true;
+        }
 
         $stopListener = false;
         $isProcessed = false;
@@ -200,5 +225,74 @@ class Simple implements Listener
         } else {
             $this->queue->nack($message->getDeliveryTag());
         }
+    }
+
+    /**
+     * Attempts to reconnect on a dead connection
+     * Usable for long running processes, where the stale connections get collected
+     * after some time
+     *
+     * @return void
+     */
+    protected function reconnect()
+    {
+        $connection = $this->rejectExchange->getConnection();
+        $channel = $this->rejectExchange->getChannel();
+
+        $connection->reconnect();
+
+        // since the channel is also dead, need to somehow revive it. This can be
+        // done only by calling the constructor of the channel
+        $channel->__construct($connection);
+    }
+
+    /**
+     * Identifies whether there should be a reprocess happening
+     *
+     * @param AMQPEnvelope $message The AMQPEnvelope
+     *
+     * @return bool
+     */
+    protected function allowReprocess(AMQPEnvelope $message)
+    {
+        if (isset($this->configuration['reprocess_counter']) && (int) $this->configuration['reprocess_counter'] > 0) {
+            // retrieve the x-death header if it exists
+            $xDeath = $message->getHeader('x-death');
+
+            // loop through the records in the header and locate if this has been rejected more times than allowed
+            $queueName = $this->queue->getName();
+            foreach ($xDeath as $rejectedFrom) {
+                if (isset($rejectedFrom['queue']) &&
+                    $rejectedFrom['queue'] == $queueName &&
+                    $rejectedFrom['count'] >= $this->configuration['reprocess_counter']
+                ) {
+                    if (isset($this->rejectExchange) && $this->rejectExchange instanceof \AMQPExchange) {
+                        $parameters = [
+                            'content_type'     => $message->getContentType(),
+                            'content_encoding' => $message->getContentEncoding(),
+                            'app_id'           => $message->getAppId(),
+                            'correlation_id'   => $message->getCorrelationId(),
+                            'delivery_mode'    => $message->getDeliveryMode(),
+                            'timestamp'        => $message->getTimeStamp(),
+                            'type'             => $message->getType(),
+                            'user_id'          => $message->getUserId(),
+                            'priority'         => $message->getPriority(),
+                            'expiration'       => $message->getExpiration(),
+                            'headers'          => ['original-headers' => json_encode($message->getHeaders())],
+                        ];
+                        try {
+                            $this->rejectExchange->publish($message->getBody(), $this->rejectRoutingKey, AMQP_NOPARAM, $parameters);
+                        } catch (\AMQPException $e) {
+                            $this->reconnect();
+                            $this->rejectExchange->publish($message->getBody(), $this->rejectRoutingKey, AMQP_NOPARAM, $parameters);
+                        }
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 }
