@@ -37,11 +37,11 @@ YAML;
             }
         });
 
-        $expected = [
+        $expected = array(
             'foo_string' => 'foo_string',
             'foo_arr' => [1, 2, ['name' => 'test']],
             'test' => 1,
-        ];
+        );
 
         $config = $mockLoader->load('test.yml');
         $this->assertEquals($config, $expected);

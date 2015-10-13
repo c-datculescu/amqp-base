@@ -267,7 +267,7 @@ class Simple implements Listener
                     $rejectedFrom['count'] >= $this->configuration['reprocess_counter']
                 ) {
                     if (isset($this->rejectExchange) && $this->rejectExchange instanceof \AMQPExchange) {
-                        $parameters = [
+                        $parameters = array(
                             'content_type'     => $message->getContentType(),
                             'content_encoding' => $message->getContentEncoding(),
                             'app_id'           => $message->getAppId(),
@@ -278,7 +278,7 @@ class Simple implements Listener
                             'user_id'          => $message->getUserId(),
                             'priority'         => $message->getPriority(),
                             'expiration'       => $message->getExpiration(),
-                            'headers'          => ['original-headers' => json_encode($message->getHeaders())],
+                            'headers'          => array('original-headers' => json_encode($message->getHeaders())),
                         ];
                         try {
                             $this->rejectExchange->publish($message->getBody(), $this->rejectRoutingKey, AMQP_NOPARAM, $parameters);
