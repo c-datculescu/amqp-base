@@ -279,7 +279,7 @@ class Simple implements Listener
                             'priority'         => $message->getPriority(),
                             'expiration'       => $message->getExpiration(),
                             'headers'          => array('original-headers' => json_encode($message->getHeaders())),
-                        ];
+                        );
                         try {
                             $this->rejectExchange->publish($message->getBody(), $this->rejectRoutingKey, AMQP_NOPARAM, $parameters);
                         } catch (\AMQPException $e) {
