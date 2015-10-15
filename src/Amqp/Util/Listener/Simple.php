@@ -259,6 +259,10 @@ class Simple implements Listener
             // retrieve the x-death header if it exists
             $xDeath = $message->getHeader('x-death');
 
+            if ($xDeath === false) {
+                return true;
+            }
+
             // loop through the records in the header and locate if this has been rejected more times than allowed
             $queueName = $this->queue->getName();
             foreach ($xDeath as $rejectedFrom) {

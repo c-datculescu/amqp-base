@@ -1,0 +1,84 @@
+amqp:
+    connection:
+        consumer:
+            host        : ["localhost"]
+            port        : 5672
+            login       : admin
+            password    : admin
+            vhost       : /
+
+    channel:
+        consumer:
+            connection  : consumer
+
+    exchange:
+        main_exchange:
+            channel: consumer
+            name:
+                name: main_exchange
+                type: constant
+            dependencies:
+                exchange:
+                    - dlx_exchange
+                    - graveyard_exchange
+            type: AMQP_EX_TYPE_TOPIC
+
+        dlx_exchange:
+            channel: consumer
+            name:
+                name: dlx_exchange
+                type: constant
+            type: AMQP_EX_TYPE_TOPIC
+
+        graveyard_exchange:
+            channel: consumer
+            name:
+                name: graveyard_exchange
+                type: constant
+            type: AMQP_EX_TYPE_TOPIC
+
+    queue:
+        main_queue:
+            channel: consumer
+            name:
+                name: main_queue
+                type: constant
+            arguments:
+                dl_exchange: dlx_exchange
+                dl_routingKey: test
+            flags: [AMQP_DURABLE]
+            bindings:
+                -
+                    exchange: main_exchange
+                    routingKey: "#"
+            dependencies:
+                queue:
+                    - timeout_queue
+                    - graveyard_queue
+
+        timeout_queue:
+            channel: consumer
+            name:
+                name: timeout_queue
+                type: constant
+            arguments:
+                message_ttl: 100            # hold the messages for 100 milliseconds
+                dl_exchange: main_exchange
+                dl_routingKey: test
+            flags: [AMQP_DURABLE]
+            bindings:
+                -
+                    exchange: dlx_exchange
+                    routingKey: "#"
+
+        graveyard_queue:
+            channel: consumer
+            name:
+                name: graveyard_queue
+                type: constant
+            bindings:
+                -
+                    exchange: graveyard_exchange
+                    routingKey: "#"
+
+            flags: [AMQP_DURABLE]
