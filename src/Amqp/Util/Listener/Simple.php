@@ -111,6 +111,13 @@ class Simple implements Listener
      */
     public function consume(AMQPEnvelope $message)
     {
+        if (isset($this->configuration['skip_if_redelivered']) && $this->configuration['skip_if_redelivered'] === true) {
+            if ($message->isRedelivery() === true) {
+                $this->queue->nack($message->getDeliveryTag());
+
+                return true;
+            }
+        }
         $bulkAck = $this->configuration['bulkAck'];
 
         $allowReprocess = $this->allowReprocess($message);
