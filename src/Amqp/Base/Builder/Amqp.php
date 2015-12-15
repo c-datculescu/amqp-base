@@ -214,19 +214,8 @@ class Amqp implements Interfaces\Amqp
                 return ($current['delete'] && !$next['delete']) ? 0 : 1;
             });
 
-            foreach ($bindings as $binding) {
-                if (isset($binding['arguments'])) {
-                    $arguments = $binding['arguments'];
-                } else {
-                    $arguments = array();
-                }
-
-                if (isset($binding['delete']) && $binding['delete'] === true) {
-                    $queue->unbind($binding['exchange'], $binding['routingKey'], $arguments);
-                } else {
-                    $queue->bind($binding['exchange'], $binding['routingKey'], $arguments);
-                }
-            }
+            // process bindings for the current queue
+            $this->processBindings($bindings, $queue);
         }
 
         $this->queues[$queueName] = $queue;
@@ -236,6 +225,48 @@ class Amqp implements Interfaces\Amqp
         }
 
         return $queue;
+    }
+
+    /**
+     * @param array                  $bindings    The bindings that need to be processed
+     * @param AMQPQueue|AMQPExchange $destination The destination for the binding
+     */
+    protected function processBindings(array $bindings, $destination)
+    {
+        foreach ($bindings as $binding) {
+            $sourceExchange = $binding['exchange'];
+
+            // simple binding
+            if (isset($binding['routingKey'])) {
+                if (!isset($binding['arguments'])) {
+                    $binding['arguments'] = array();
+                }
+                if (isset($binding['delete']) && $binding['delete']) {
+                    $destination->unbind($sourceExchange, $binding['routingKey'], $binding['arguments']);
+                } else {
+                    $destination->bind($sourceExchange, $binding['routingKey'], $binding['arguments']);
+                }
+
+            // multiple binding on same exchange
+            } elseif (isset($binding['routingKeys'])) {
+                if (is_array($binding['routingKeys'])) {
+                    foreach ($binding['routingKeys'] as $routingKey) {
+                        if (!isset($routingKey['arguments'])) {
+                            if ($destination instanceof AMQPExchange) {
+                                $routingKey['arguments'] = AMQP_NOPARAM;
+                            } else {
+                                $routingKey['arguments'] = array();
+                            }
+                        }
+                        if (isset($routingKey['delete']) && $routingKey['delete']) {
+                            $destination->unbind($sourceExchange, $routingKey['key'], $routingKey['arguments']);
+                        } else {
+                            $destination->bind($sourceExchange, $routingKey['key'], $routingKey['arguments']);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -312,13 +343,8 @@ class Amqp implements Interfaces\Amqp
                 return ($current['delete'] && !$next['delete']) ? 0 : 1;
             });
 
-            foreach ($bindings as $binding) {
-                if (isset($binding['delete']) && $binding['delete'] === true) {
-                    $exchange->unbind($binding['exchange'], $binding['routingKey']);
-                } else {
-                    $exchange->bind($binding['exchange'], $binding['routingKey']);
-                }
-            }
+            // process bindings for the current exchange
+            $this->processBindings($bindings, $exchange);
         }
 
         if (isset($this->cyclicLoggers['exchanges'][$exchangeName])) {
