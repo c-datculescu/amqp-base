@@ -239,7 +239,11 @@ class Amqp implements Interfaces\Amqp
             // simple binding
             if (isset($binding['routingKey'])) {
                 if (!isset($binding['arguments'])) {
-                    $binding['arguments'] = array();
+                    if ($destination instanceof AMQPExchange) {
+                        $binding['arguments'] = AMQP_NOPARAM;
+                    } else {
+                        $binding['arguments'] = array();
+                    }
                 }
                 if (isset($binding['delete']) && $binding['delete']) {
                     $destination->unbind($sourceExchange, $binding['routingKey'], $binding['arguments']);
