@@ -215,7 +215,7 @@ class Amqp implements Interfaces\Amqp
             });
 
             // process bindings for the current queue
-            $this->processBindings($bindings, $queue);
+            $this->processQueueBindings($bindings, $queue);
         }
 
         $this->queues[$queueName] = $queue;
@@ -228,10 +228,10 @@ class Amqp implements Interfaces\Amqp
     }
 
     /**
-     * @param array                  $bindings    The bindings that need to be processed
-     * @param AMQPQueue|AMQPExchange $destination The destination for the binding
+     * @param array     $bindings
+     * @param AMQPQueue $destination
      */
-    protected function processBindings(array $bindings, $destination)
+    public function processQueueBindings(array $bindings, AMQPQueue $destination)
     {
         foreach ($bindings as $binding) {
             $sourceExchange = $binding['exchange'];
@@ -240,11 +240,7 @@ class Amqp implements Interfaces\Amqp
             if (isset($binding['routingKey'])) {
 
                 if (!isset($binding['arguments']) || empty($binding['arguments'])) {
-                    if ($destination instanceof AMQPExchange) {
-                        $binding['arguments'] = AMQP_NOPARAM;
-                    } else {
-                        $binding['arguments'] = array();
-                    }
+                    $binding['arguments'] = array();
                 }
                 if (isset($binding['delete']) && $binding['delete']) {
                     $destination->unbind($sourceExchange, $binding['routingKey'], $binding['arguments']);
@@ -252,21 +248,45 @@ class Amqp implements Interfaces\Amqp
                     $destination->bind($sourceExchange, $binding['routingKey'], $binding['arguments']);
                 }
 
-            // multiple binding on same exchange
+                // multiple binding on same exchange
             } elseif (isset($binding['routingKeys'])) {
                 if (is_array($binding['routingKeys'])) {
                     foreach ($binding['routingKeys'] as $routingKey) {
                         if (!isset($routingKey['arguments']) || empty($routingKey['arguments'])) {
-                            if ($destination instanceof AMQPExchange) {
-                                $routingKey['arguments'] = AMQP_NOPARAM;
-                            } else {
-                                $routingKey['arguments'] = array();
-                            }
+                            $routingKey['arguments'] = array();
                         }
                         if (isset($routingKey['delete']) && $routingKey['delete']) {
                             $destination->unbind($sourceExchange, $routingKey['key'], $routingKey['arguments']);
                         } else {
                             $destination->bind($sourceExchange, $routingKey['key'], $routingKey['arguments']);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array        $bindings
+     * @param AMQPExchange $destination
+     */
+    public function processExchangeBindings(array $bindings, AMQPExchange $destination)
+    {
+        foreach ($bindings as $binding) {
+            $sourceExchange = $binding['exchange'];
+
+            // simple binding
+            if (isset($binding['routingKey'])) {
+                if (!isset($binding['delete']) || !$binding['delete']) {
+                    $destination->bind($sourceExchange, $binding['routingKey']);
+                }
+
+            // multiple binding on same exchange
+            } elseif (isset($binding['routingKeys'])) {
+                if (is_array($binding['routingKeys'])) {
+                    foreach ($binding['routingKeys'] as $routingKey) {
+                        if (!isset($routingKey['delete']) || !$routingKey['delete']) {
+                            $destination->bind($sourceExchange, $routingKey['key']);
                         }
                     }
                 }
@@ -349,7 +369,7 @@ class Amqp implements Interfaces\Amqp
             });
 
             // process bindings for the current exchange
-            $this->processBindings($bindings, $exchange);
+            $this->processExchangeBindings($bindings, $exchange);
         }
 
         if (isset($this->cyclicLoggers['exchanges'][$exchangeName])) {
