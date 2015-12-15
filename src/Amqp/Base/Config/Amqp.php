@@ -140,7 +140,7 @@ class Amqp implements ConfigurationInterface, NamedConfigInterface
                         ->end()
                     ->end()
                 ->end()
-                ->arrayNode('queue')¡
+                ->arrayNode('queue')
                     ->prototype('array')
                         ->children()
                             ->arrayNode('dependencies')
