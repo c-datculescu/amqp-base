@@ -238,7 +238,8 @@ class Amqp implements Interfaces\Amqp
 
             // simple binding
             if (isset($binding['routingKey'])) {
-                if (!isset($binding['arguments'])) {
+
+                if (!isset($binding['arguments']) || empty($binding['arguments'])) {
                     if ($destination instanceof AMQPExchange) {
                         $binding['arguments'] = AMQP_NOPARAM;
                     } else {
@@ -255,7 +256,7 @@ class Amqp implements Interfaces\Amqp
             } elseif (isset($binding['routingKeys'])) {
                 if (is_array($binding['routingKeys'])) {
                     foreach ($binding['routingKeys'] as $routingKey) {
-                        if (!isset($routingKey['arguments'])) {
+                        if (!isset($routingKey['arguments']) || empty($routingKey['arguments'])) {
                             if ($destination instanceof AMQPExchange) {
                                 $routingKey['arguments'] = AMQP_NOPARAM;
                             } else {
