@@ -1,6 +1,8 @@
 <?php
 namespace Amqp\Util\Listener;
 
+use Amqp\Base\Builder\Amqp;
+use Amqp\Base\Builder\Exception;
 use Amqp\Util\Monitor\Interfaces\Monitor;
 use Amqp\Util\Listener\Interfaces\Listener;
 use Amqp\Util\Interfaces\Processor;
@@ -36,6 +38,11 @@ class Simple implements Listener
     protected $nackCounter = 0;
 
     /**
+     * @var Amqp
+     */
+    protected $builder = null;
+
+    /**
      * This exchange serves as a final rejection point after a message has been processed more than the allowed amount
      * @var \AMQPExchange
      */
@@ -63,6 +70,20 @@ class Simple implements Listener
     public function setQueue(\AMQPQueue $queue)
     {
         $this->queue = $queue;
+
+        return $this;
+    }
+
+    /**
+     * Sets the builder for accessing some exchanges
+     *
+     * @param Amqp $builder
+     *
+     * @return $this
+     */
+    public function setBuilder(Amqp $builder)
+    {
+        $this->builder = $builder;
 
         return $this;
     }
@@ -268,6 +289,21 @@ class Simple implements Listener
 
             if ($xDeath === false) {
                 return true;
+            }
+
+            if (!$this->rejectExchange instanceof \AMQPExchange) {
+                if ($this->builder instanceof Amqp) {
+                    if (isset($this->configuration['reject_target_exchange'])) {
+                        if (isset($this->configuration['reject_target_routingKey'])) {
+                            $rejectRoutingKey = $this->configuration['reject_target_routingKey'];
+                        } else {
+                            $rejectRoutingKey = $message->getRoutingKey();
+                        }
+
+                        $rejectExchange = $this->builder->exchange($this->configuration['reject_target_exchange']);
+                        $this->setRejectTarget($rejectExchange, $rejectRoutingKey);
+                    }
+                }
             }
 
             // loop through the records in the header and locate if this has been rejected more times than allowed

@@ -50,7 +50,9 @@ $simpleListener = new \Amqp\Util\Listener\Simple();
 $simpleListener->setQueue($queue);
 $simpleListener->setConfiguration($config);
 $simpleListener->setProcessor($processor);
-$simpleListener->setRejectTarget($rejectExchange, $config['reject_target_routingKey']);
+$simpleListener->setBuilder($builder);
+// use without a builder
+//$simpleListener->setRejectTarget($rejectExchange, $config['reject_target_routingKey']);
 
 echo date("Y-m-d H:i:s") . " Started listener for test!\n";
 $simpleListener->listen();
