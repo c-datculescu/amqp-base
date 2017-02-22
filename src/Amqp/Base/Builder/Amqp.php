@@ -354,28 +354,28 @@ class Amqp implements Interfaces\Amqp
     protected function getQueueProperties(array $arguments)
     {
         $ret = array();
-        if (isset($arguments['message_ttl'])) {
-            $ret['x-message-ttl'] = $arguments['message_ttl'];
+        if (isset($arguments['message-ttl'])) {
+            $ret['x-message-ttl'] = $arguments['message-ttl'];
         }
 
         if (isset($arguments['expires'])) {
             $ret['x-expires'] = $arguments['expires'];
         }
 
-        if (isset($arguments['dl_exchange'])) {
-            $ret['x-dead-letter-exchange'] = $arguments['dl_exchange'];
+        if (isset($arguments['dl-exchange'])) {
+            $ret['x-dead-letter-exchange'] = $arguments['dl-exchange'];
         }
 
-        if (isset($arguments['dl_routingKey'])) {
-            $ret['x-dead-letter-routing-key'] = $arguments['dl_routingKey'];
+        if (isset($arguments['dl-routingKey'])) {
+            $ret['x-dead-letter-routing-key'] = $arguments['dl-routingKey'];
         }
 
-        if (isset($arguments['max_length'])) {
-            $ret['x-max-length'] = $arguments['max_length'];
+        if (isset($arguments['max-length'])) {
+            $ret['x-max-length'] = $arguments['max-length'];
         }
 
-        if (isset($arguments['max_bytes'])) {
-            $ret['x-max-length-bytes'] = $arguments['max_bytes'];
+        if (isset($arguments['max-bytes'])) {
+            $ret['x-max-length-bytes'] = $arguments['max-bytes'];
         }
 
         return $ret;
