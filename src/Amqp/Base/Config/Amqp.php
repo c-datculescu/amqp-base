@@ -47,7 +47,7 @@ class Amqp implements ConfigurationInterface, NamedConfigInterface
                                 ->defaultValue(0.2)
                             ->end()
                             ->integerNode('heartbeat')
-                                ->defaultValue(10)
+                                ->defaultValue(0)
                             ->end()
                         ->end()
                     ->end()
