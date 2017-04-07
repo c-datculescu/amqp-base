@@ -167,16 +167,32 @@ class Amqp implements Interfaces\Amqp
      */
     public function queue($queueName, $initDependencies = true)
     {
-        if (isset($this->queues[$queueName])) {
-            return $this->queues[$queueName];
-        }
-
-        // initialize the queue
+        // initialize the queue configuration
         if (!isset($this->amqpConfiguration['queue'][$queueName])) {
             throw new Exception('Could not find queue definition!', 404);
         }
 
         $configuration = $this->amqpConfiguration['queue'][$queueName];
+
+        if (isset($this->queues[$queueName])) {
+            $queue = $this->queues[$queueName];
+
+            // we need to do this to check the validity of the queue/channel/connection
+            // @see https://github.com/pdezwart/php-amqp/issues/35
+            // this is a very dirty hack for recovering the exchange and getting a proper one that works
+            $queue->setFlags(AMQP_PASSIVE);
+
+            try {
+                $queue->declareQueue();
+                return $queue;
+            } catch (\AMQPException $e) {
+                // since the channel is dead, the queue needs to be remade.
+                // cleanup the channel and reconnect the connection (the needed resources for the queue to work)
+                $queue->getConnection()->reconnect();
+                unset($this->channels[$configuration['channel']]);
+                // continue with the queue since we need the channel back and this is all handled below
+            }
+        }
 
         if (!isset($this->cyclicLoggers['queues'][$queueName])) {
             $this->cyclicLoggers['queues'][$queueName] = 1;
@@ -243,16 +259,32 @@ class Amqp implements Interfaces\Amqp
      */
     public function exchange($exchangeName, $initDependencies = true)
     {
-        if (isset($this->exchanges[$exchangeName])) {
-            return $this->exchanges[$exchangeName];
-        }
-
         // initialize the exchange
         if (!isset($this->amqpConfiguration['exchange'][$exchangeName])) {
             throw new Exception('Could not find exchange definition!', 404);
         }
 
         $configuration = $this->amqpConfiguration['exchange'][$exchangeName];
+
+        if (isset($this->exchanges[$exchangeName])) {
+            $exchange = $this->exchanges[$exchangeName];
+
+            // we need to do this to check the validity of the exchange/channel/connection
+            // @see https://github.com/pdezwart/php-amqp/issues/35
+            // this is a very dirty hack for recovering the exchange and getting a proper one that works
+            $exchange->setFlags(AMQP_PASSIVE);
+            try {
+                $exchange->declareExchange();
+                return $exchange;
+            } catch (\AMQPException $e) {
+                // since the channel is dead, the exchange needs to be remade.
+                // cleanup the channel and reconnect the connection (the needed resources for the exchange to work)
+                $exchange->getConnection()->reconnect();
+                unset($this->channels[$configuration['channel']]);
+                // continue with the exchange since we need the channel back and this is all handled below
+            }
+
+        }
 
         if (!isset($this->cyclicLoggers['exchanges'][$exchangeName])) {
             $this->cyclicLoggers['exchanges'][$exchangeName] = 1;
