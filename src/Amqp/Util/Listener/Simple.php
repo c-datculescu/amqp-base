@@ -319,7 +319,8 @@ class Simple implements Listener
                             'content_encoding' => $message->getContentEncoding(),
                             'app_id'           => $message->getAppId(),
                             'correlation_id'   => $message->getCorrelationId(),
-                            'delivery_mode'    => $message->getDeliveryMode(),
+                            // the delivery mode can be missing from the message so we fallback to 2 (persistent) to avoid an error
+                            'delivery_mode'    => $message->getDeliveryMode() ? $message->getDeliveryMode() : 2,
                             'timestamp'        => $message->getTimeStamp(),
                             'type'             => $message->getType(),
                             'user_id'          => $message->getUserId(),
