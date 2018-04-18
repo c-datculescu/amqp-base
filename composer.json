@@ -16,8 +16,8 @@
     ],
 
     "require": {
-        "symfony/yaml": "2.*",
-        "symfony/config": "2.*"
+        "symfony/yaml": "2.*|^4.0",
+        "symfony/config": "2.*|^4.0"
     },
     "require-dev": {
         "symfony/dependency-injection": "2.*",
