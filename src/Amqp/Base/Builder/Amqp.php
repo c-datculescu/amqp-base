@@ -94,6 +94,8 @@ class Amqp implements Interfaces\Amqp
         // disable heartbeat if it is 0
         if ($configuration['heartbeat'] > 0) {
             $tempConfig['heartbeat'] = $configuration['heartbeat'];
+        } else {
+            $tempConfig['heartbeat'] = 0;
         }
 
         // initialize the connection
