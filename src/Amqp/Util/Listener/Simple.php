@@ -139,7 +139,11 @@ class Simple implements Listener
                 return true;
             }
         }
-        $bulkAck = $this->configuration['bulkAck'];
+
+        $bulkAck = 0;
+        if (isset($this->configuration['bulkAck'])) {
+            $bulkAck = $this->configuration['bulkAck'];
+        }
 
         $allowReprocess = $this->allowReprocess($message);
         // if reprocess is not allowed, ack the message

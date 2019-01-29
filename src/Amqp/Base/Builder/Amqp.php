@@ -89,10 +89,12 @@ class Amqp implements Interfaces\Amqp
         // via the public interface.
         // this option needs to be passed to constructor
         $tempConfig = array();
-        $tempConfig['connect_timeout'] = $configuration['connectTimeout'];
+        if (isset($configuration['connect_timeout'])) {
+            $tempConfig['connect_timeout'] = $configuration['connectTimeout'];
+        }
 
         // disable heartbeat if it is 0
-        if ($configuration['heartbeat'] > 0) {
+        if (isset($configuration['heartbeat']) && is_numeric($configuration['heartbeat']) && $configuration['heartbeat'] > 0) {
             $tempConfig['heartbeat'] = $configuration['heartbeat'];
         } else {
             $tempConfig['heartbeat'] = 0;
@@ -110,8 +112,14 @@ class Amqp implements Interfaces\Amqp
         $connection->setLogin($configuration['login']);
         $connection->setPassword($configuration['password']);
         $connection->setVhost($configuration['vhost']);
-        $connection->setReadTimeout($configuration['readTimeout']);
-        $connection->setWriteTimeout($configuration['writeTimeout']);
+
+        if (isset($configuration['readTimeout'])) {
+            $connection->setReadTimeout($configuration['readTimeout']);
+        }
+        if (isset($configuration['writeTimeout'])) {
+            $connection->setWriteTimeout($configuration['writeTimeout']);
+        }
+
         try {
             $connection->connect();
             $this->attemptedConenctions[$connectionName] = 0;
@@ -229,7 +237,7 @@ class Amqp implements Interfaces\Amqp
 
             // move bindings scheduled for removal to the top
             usort($bindings, function($current, $next) {
-                return ($current['delete'] && !$next['delete']) ? 0 : 1;
+                return (isset($current['delete']) && $current['delete'] && !$next['delete']) ? 0 : 1;
             });
 
             foreach ($bindings as $binding) {
