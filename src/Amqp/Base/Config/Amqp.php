@@ -12,8 +12,12 @@ class Amqp implements ConfigurationInterface, NamedConfigInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('amqp');
+        $treeBuilder = new TreeBuilder("amqp");
+        if (method_exists($treeBuilder, 'getRootNode')) {
+            $rootNode = $treeBuilder->getRootNode();
+        } else {
+            $rootNode = $treeBuilder->root('amqp');
+        }
 
         $rootNode
             ->ignoreExtraKeys()
