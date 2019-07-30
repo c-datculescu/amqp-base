@@ -89,7 +89,7 @@ class Amqp implements Interfaces\Amqp
         // via the public interface.
         // this option needs to be passed to constructor
         $tempConfig = array();
-        if (isset($configuration['connect_timeout'])) {
+        if (isset($configuration['connectTimeout'])) {
             $tempConfig['connect_timeout'] = $configuration['connectTimeout'];
         }
 
