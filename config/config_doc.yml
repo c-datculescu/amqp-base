@@ -143,7 +143,7 @@ amqp:
         # the messages ttl on queue. The value is in miliseconds
         # @see
         # @see http://www.rabbitmq.com/ttl.html
-        message-ttl:    60000
+        message_ttl:    60000
 
         # the amount of time the queue expires after there has been no operation
         # on it
@@ -154,22 +154,22 @@ amqp:
         # the limit of the queue to be routed on different exchange where they can be
         # reprocessed
         # @see http://www.rabbitmq.com/dlx.html
-        dl-exchange:    exchange-name
+        dl_exchange:    exchange-name
 
         # can be used in combination with the dl-exchange above
         # specifies a routing key to be used when message is dead-lettered
         # @see http://www.rabbitmq.com/dlx.html
-        dl-routingKey:  some-routing-key
+        dl_routingKey:  some-routing-key
 
         # allows setting a maximum length for how many messages can a queue
         # hold.
         # @see http://www.rabbitmq.com/maxlength.html
-        max-length:     100
+        max_length:     100
 
         # part of the same length restrictioning as max-length, except it applies on
         # the size of the message instead of on number of messages
         # @see http://www.rabbitmq.com/maxlength.html
-        max-bytes:      1000
+        max_bytes:      1000
 
       # the name of the queue
       name:
