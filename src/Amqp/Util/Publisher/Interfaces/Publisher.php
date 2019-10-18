@@ -47,4 +47,11 @@ interface Publisher
      * @return mixed
      */
     public function setExchange(\AMQPExchange $exchange);
+    
+    /**
+     * Gets the current exchange to publish to
+     *
+     * @return \AMQPExchange
+     */
+    public function getExchange(): \AMQPExchange;
 }

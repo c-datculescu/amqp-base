@@ -24,6 +24,14 @@ class Simple implements Publisher
 
         return $this;
     }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getExchange(): \AMQPExchange
+    {
+        return $this->exchange;
+    }
 
     /**
      * {@inheritdoc}
