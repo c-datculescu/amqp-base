@@ -318,6 +318,11 @@ class Simple implements Listener
                     $rejectedFrom['count'] >= $this->configuration['reprocess_counter']
                 ) {
                     if (isset($this->rejectExchange) && $this->rejectExchange instanceof \AMQPExchange) {
+                        $originalHeaders = $message->getHeaders();
+                        if (array_key_exists('original-headers', $originalHeaders)) {
+                            $originalHeaders['original-headers'] = json_decode($originalHeaders['original-headers']);
+                        }
+
                         $parameters = array(
                             'content_type'     => $message->getContentType(),
                             'content_encoding' => $message->getContentEncoding(),
@@ -330,7 +335,7 @@ class Simple implements Listener
                             'user_id'          => $message->getUserId(),
                             'priority'         => $message->getPriority(),
                             'expiration'       => $message->getExpiration(),
-                            'headers'          => array('original-headers' => json_encode($message->getHeaders())),
+                            'headers'          => array('original-headers' => json_encode($originalHeaders)),
                         );
                         try {
                             $this->rejectExchange->publish($message->getBody(), $this->rejectRoutingKey, AMQP_NOPARAM, $parameters);
